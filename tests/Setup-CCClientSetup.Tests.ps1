@@ -109,3 +109,21 @@ Describe "templates/gitignore.template" {
         $content | Should -Match "node_modules/"
     }
 }
+
+Describe "templates/pre-commit.ps1.template" {
+    BeforeAll {
+        $script:PreCommitPath = Join-Path $script:RepoRoot "templates/pre-commit.ps1.template"
+    }
+    It "Should exist" {
+        Test-Path $script:PreCommitPath | Should -Be $true
+    }
+    It "Should contain AKIA regex (AWS key detection)" {
+        Get-Content $script:PreCommitPath -Raw | Should -Match "AKIA"
+    }
+    It "Should contain BEGIN PRIVATE KEY regex" {
+        Get-Content $script:PreCommitPath -Raw | Should -Match "BEGIN.*PRIVATE KEY"
+    }
+    It "Should exit 1 on detection" {
+        Get-Content $script:PreCommitPath -Raw | Should -Match "exit 1"
+    }
+}

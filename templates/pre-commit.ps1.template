@@ -1,0 +1,41 @@
+# pre-commit hook for cc-client-setup target project
+# Invoked via .git/hooks/pre-commit shim:
+#   #!/bin/sh
+#   exec pwsh.exe -File "$(git rev-parse --show-toplevel)/.git/hooks/pre-commit.ps1" "$@"
+
+$ErrorActionPreference = "Stop"
+
+# Get staged file diff content
+$stagedFiles = git diff --cached --name-only --diff-filter=ACM 2>$null
+if (-not $stagedFiles) { exit 0 }
+
+# Secret regex patterns (false positive 低めの strict patterns)
+$patterns = @(
+    @{ Name = "AWS Access Key"; Regex = "AKIA[0-9A-Z]{16}" },
+    @{ Name = "Private Key"; Regex = "-----BEGIN ((RSA|EC|DSA|OPENSSH) )?PRIVATE KEY-----" },
+    @{ Name = "Generic password assignment"; Regex = "(?i)password\s*=\s*['""][^'""\s]{8,}['""]" },
+    @{ Name = "GitHub token"; Regex = "ghp_[A-Za-z0-9]{36}" },
+    @{ Name = "Slack token"; Regex = "xox[abposr]-[A-Za-z0-9-]{10,}" }
+)
+
+$hits = @()
+foreach ($file in $stagedFiles) {
+    if (-not (Test-Path $file)) { continue }
+    $content = Get-Content $file -Raw -ErrorAction SilentlyContinue
+    if (-not $content) { continue }
+    foreach ($p in $patterns) {
+        if ($content -match $p.Regex) {
+            $hits += "$file : $($p.Name) ($($p.Regex))"
+        }
+    }
+}
+
+if ($hits.Count -gt 0) {
+    Write-Host "pre-commit: 機密情報の疑いを検出しました。staged file を見直してください。" -ForegroundColor Red
+    foreach ($h in $hits) { Write-Host "  - $h" -ForegroundColor Red }
+    Write-Host "" -ForegroundColor Red
+    Write-Host "false positive の場合、`git commit --no-verify` で bypass 可能 (慎重に)。" -ForegroundColor Yellow
+    exit 1
+}
+
+exit 0
