@@ -259,7 +259,7 @@ Describe "Setup-CCClientSetup.ps1 - Install-ClaudeCodeRules" {
     }
 }
 
-Describe "Setup-CCClientSetup.ps1 - Install-ClaudeCodeSettings" {
+Describe "Setup-CCClientSetup.ps1 - Install-ClaudeCodeSettings + Install-ClaudeCodeHooks" {
     BeforeAll {
         $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
         . $script:SetupScript

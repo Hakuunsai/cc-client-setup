@@ -19,8 +19,7 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$ProjectPath
+    [string]$ProjectPath = $null
 )
 
 $ErrorActionPreference = "Stop"
