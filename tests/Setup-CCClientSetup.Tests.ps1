@@ -152,3 +152,23 @@ Describe "templates/company-secretary/" {
         Test-Path (Join-Path $script:SecretaryTemplateDir "secretary/inbox/.gitkeep") | Should -Be $true
     }
 }
+
+Describe "hooks/PreToolUse-DenyDangerous.ps1" {
+    BeforeAll {
+        $script:PreHookPath = Join-Path $script:RepoRoot "hooks/PreToolUse-DenyDangerous.ps1"
+    }
+    It "Should exist" {
+        Test-Path $script:PreHookPath | Should -Be $true
+    }
+    It "Should mention curl / Invoke-WebRequest" {
+        $content = Get-Content $script:PreHookPath -Raw
+        $content | Should -Match "curl"
+        $content | Should -Match "Invoke-WebRequest"
+    }
+    It "Should exit 2 on deny" {
+        Get-Content $script:PreHookPath -Raw | Should -Match "exit 2"
+    }
+    It "Should read stdin JSON" {
+        Get-Content $script:PreHookPath -Raw | Should -Match "ConvertFrom-Json|\\\$input|System\.Console::In"
+    }
+}
