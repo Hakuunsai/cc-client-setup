@@ -65,3 +65,24 @@ Describe "templates/CLAUDE.md.template" {
         Get-Content $script:ClaudeMdPath -Raw | Should -Match "秘書|\.company/secretary"
     }
 }
+
+Describe "templates/settings.json.template" {
+    BeforeAll {
+        $script:SettingsPath = Join-Path $script:RepoRoot "templates/settings.json.template"
+    }
+    It "Should exist" {
+        Test-Path $script:SettingsPath | Should -Be $true
+    }
+    It "Should contain Bash(curl:*) deny" {
+        Get-Content $script:SettingsPath -Raw | Should -Match 'Bash\(curl:\*\)'
+    }
+    It "Should contain PreToolUse hook reference" {
+        Get-Content $script:SettingsPath -Raw | Should -Match "PreToolUse-DenyDangerous"
+    }
+    It "Should contain PostToolUse auto-checkpoint reference" {
+        Get-Content $script:SettingsPath -Raw | Should -Match "PostToolUse-AutoCheckpoint"
+    }
+    It "Should contain <USER> placeholder for runtime substitution" {
+        Get-Content $script:SettingsPath -Raw | Should -Match "<USER>"
+    }
+}
