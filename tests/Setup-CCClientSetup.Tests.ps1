@@ -384,3 +384,34 @@ Describe "Setup-CCClientSetup.ps1 - Initialize-ProjectGit" {
         }
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - end-to-end" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        $script:TmpProject6 = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-proj6-" + [System.Guid]::NewGuid()) -Force
+        $script:FakeHome6 = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-home6-" + [System.Guid]::NewGuid()) -Force
+    }
+    AfterAll {
+        Remove-Item $script:TmpProject6 -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item $script:FakeHome6 -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    It "Should be invokable with -ProjectPath argument (smoke)" {
+        & pwsh -NoLogo -NoProfile -File $script:SetupScript -ProjectPath $script:TmpProject6 -Force -TestHomeOverride $script:FakeHome6 2>&1 | Out-Null
+        $LASTEXITCODE | Should -Be 0
+    }
+    It "Should have placed all expected files" {
+        Test-Path (Join-Path $script:FakeHome6 ".claude/rules/security-essentials.md") | Should -Be $true
+        Test-Path (Join-Path $script:FakeHome6 ".claude/settings.json") | Should -Be $true
+        Test-Path (Join-Path $script:FakeHome6 ".claude/hooks/PreToolUse-DenyDangerous.ps1") | Should -Be $true
+        Test-Path (Join-Path $script:FakeHome6 ".claude/CLAUDE.md") | Should -Be $true
+        Test-Path (Join-Path $script:TmpProject6 "CLAUDE.md") | Should -Be $true
+        Test-Path (Join-Path $script:TmpProject6 ".gitignore") | Should -Be $true
+        Test-Path (Join-Path $script:TmpProject6 ".company/secretary/notes") | Should -Be $true
+    }
+    It "Should be idempotent (run twice produces backups)" {
+        & pwsh -NoLogo -NoProfile -File $script:SetupScript -ProjectPath $script:TmpProject6 -Force -TestHomeOverride $script:FakeHome6 2>&1 | Out-Null
+        $LASTEXITCODE | Should -Be 0
+        $backups = Get-ChildItem -Path (Join-Path $script:FakeHome6 ".claude/rules") -Filter "*.bak.*"
+        $backups.Count | Should -BeGreaterOrEqual 3
+    }
+}

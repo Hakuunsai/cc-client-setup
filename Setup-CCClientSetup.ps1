@@ -19,7 +19,9 @@
 
 [CmdletBinding()]
 param(
-    [string]$ProjectPath = $null
+    [string]$ProjectPath = $null,
+    [string]$TestHomeOverride = $null,
+    [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -231,4 +233,59 @@ function Initialize-ProjectGit {
     } finally {
         Pop-Location
     }
+}
+
+# --- main entry ---
+
+function Invoke-Main {
+    param(
+        [string]$ProjectPath,
+        [string]$TestHomeOverride,
+        [bool]$Force
+    )
+
+    if (-not $ProjectPath) {
+        throw "Setup-CCClientSetup.ps1: -ProjectPath is required when invoked (not dot-sourced)."
+    }
+
+    $homeRoot = if ($TestHomeOverride) { $TestHomeOverride } else { $env:USERPROFILE }
+    if (-not $homeRoot) { throw "Cannot determine HOME root (set USERPROFILE or pass -TestHomeOverride)" }
+
+    $userName = $env:USERNAME
+    if ($TestHomeOverride) { $userName = "testuser" }
+    if (-not $userName) { $userName = "user" }
+
+    $repoRoot = $PSScriptRoot
+
+    Write-Host "==================================================" -ForegroundColor Yellow
+    Write-Host "cc-client-setup Phase 1 MVP bootstrap" -ForegroundColor Yellow
+    Write-Host "  ProjectPath: $ProjectPath" -ForegroundColor Yellow
+    Write-Host "  HomeRoot:    $homeRoot" -ForegroundColor Yellow
+    Write-Host "  UserName:    $userName" -ForegroundColor Yellow
+    Write-Host "  RepoRoot:    $repoRoot" -ForegroundColor Yellow
+    Write-Host "==================================================" -ForegroundColor Yellow
+
+    if ($Force) {
+        Initialize-ProjectGit -ProjectRoot $ProjectPath -Force
+    } else {
+        Initialize-ProjectGit -ProjectRoot $ProjectPath
+    }
+    Install-ClaudeCodeRules -HomeRoot $homeRoot -RepoRoot $repoRoot
+    Install-ClaudeCodeHooks -HomeRoot $homeRoot -RepoRoot $repoRoot
+    Install-ClaudeCodeSettings -HomeRoot $homeRoot -RepoRoot $repoRoot -UserName $userName
+    Install-ClaudeMd -ProjectRoot $ProjectPath -HomeRoot $homeRoot -RepoRoot $repoRoot
+    Install-GitConventions -ProjectRoot $ProjectPath -RepoRoot $repoRoot
+    Install-SecretaryDir -ProjectRoot $ProjectPath -RepoRoot $repoRoot
+
+    Write-Host "" -ForegroundColor Green
+    Write-Host "==================================================" -ForegroundColor Green
+    Write-Host "cc-client-setup: 完了" -ForegroundColor Green
+    Write-Host "  - クライアントには docs/client-cheatsheet.md を渡してください" -ForegroundColor Green
+    Write-Host "  - recovery 手順は docs/recovery.md 参照" -ForegroundColor Green
+    Write-Host "==================================================" -ForegroundColor Green
+}
+
+# Detect if dot-sourced (don't auto-execute) vs invoked (execute Invoke-Main)
+if ($MyInvocation.InvocationName -ne '.') {
+    Invoke-Main -ProjectPath $ProjectPath -TestHomeOverride $TestHomeOverride -Force:$Force
 }
