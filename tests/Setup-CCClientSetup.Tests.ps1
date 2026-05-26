@@ -86,3 +86,26 @@ Describe "templates/settings.json.template" {
         Get-Content $script:SettingsPath -Raw | Should -Match "<USER>"
     }
 }
+
+Describe "templates/gitignore.template" {
+    BeforeAll {
+        $script:GitignorePath = Join-Path $script:RepoRoot "templates/gitignore.template"
+    }
+    It "Should exist" {
+        Test-Path $script:GitignorePath | Should -Be $true
+    }
+    It "Should include .env*" {
+        Get-Content $script:GitignorePath -Raw | Should -Match "\.env"
+    }
+    It "Should include Thumbs.db / Desktop.ini (Windows)" {
+        $content = Get-Content $script:GitignorePath -Raw
+        $content | Should -Match "Thumbs\.db"
+        $content | Should -Match "Desktop\.ini"
+    }
+    It "Should include bin/ obj/ node_modules/" {
+        $content = Get-Content $script:GitignorePath -Raw
+        $content | Should -Match "bin/"
+        $content | Should -Match "obj/"
+        $content | Should -Match "node_modules/"
+    }
+}
