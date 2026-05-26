@@ -204,3 +204,31 @@ Describe "hooks/PostToolUse-AutoCheckpoint.ps1" {
         $content | Should -Not -Match "git stash pop"
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - Backup-IfExists" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        # dot-source the script to load functions (will be a noop until functions exist)
+        if (Test-Path $script:SetupScript) {
+            . $script:SetupScript
+        }
+        $script:TmpDir = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-test-" + [System.Guid]::NewGuid()) -Force
+    }
+    AfterAll {
+        if ($script:TmpDir -and (Test-Path $script:TmpDir)) {
+            Remove-Item $script:TmpDir -Recurse -Force
+        }
+    }
+    It "Backup-IfExists should rename existing file to .bak.<timestamp>" {
+        $testFile = Join-Path $script:TmpDir "sample.txt"
+        Set-Content $testFile "original"
+        Backup-IfExists -Path $testFile
+        $backups = Get-ChildItem -Path $script:TmpDir -Filter "sample.txt.bak.*"
+        $backups.Count | Should -BeGreaterOrEqual 1
+        Test-Path $testFile | Should -Be $false  # original moved away
+    }
+    It "Backup-IfExists should be no-op when file does not exist" {
+        $missing = Join-Path $script:TmpDir "missing.txt"
+        { Backup-IfExists -Path $missing } | Should -Not -Throw
+    }
+}
