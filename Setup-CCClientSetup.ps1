@@ -122,3 +122,40 @@ function Install-ClaudeMd {
         Write-Host "  installed: $destPath" -ForegroundColor Green
     }
 }
+
+function Install-GitConventions {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$ProjectRoot,
+        [Parameter(Mandatory=$true)] [string]$RepoRoot
+    )
+    Write-Host "Install-GitConventions: $ProjectRoot/.gitignore + .git/hooks/" -ForegroundColor Cyan
+
+    # .gitignore
+    $gitignoreDest = Join-Path $ProjectRoot ".gitignore"
+    Backup-IfExists -Path $gitignoreDest
+    Copy-Item (Join-Path $RepoRoot "templates/gitignore.template") $gitignoreDest -Force
+    Write-Host "  installed: $gitignoreDest" -ForegroundColor Green
+
+    # pre-commit.ps1 (実体)
+    $hooksDir = Join-Path $ProjectRoot ".git/hooks"
+    if (-not (Test-Path $hooksDir)) {
+        Write-Warning "  .git/hooks not found at $hooksDir - skipping hook install (run after git init)"
+        return
+    }
+    $ps1Dest = Join-Path $hooksDir "pre-commit.ps1"
+    Backup-IfExists -Path $ps1Dest
+    Copy-Item (Join-Path $RepoRoot "templates/pre-commit.ps1.template") $ps1Dest -Force
+    Write-Host "  installed: $ps1Dest" -ForegroundColor Green
+
+    # pre-commit shim (POSIX shell that invokes pwsh)
+    $shimDest = Join-Path $hooksDir "pre-commit"
+    Backup-IfExists -Path $shimDest
+    $shimContent = "#!/bin/sh`nexec pwsh.exe -File `"`$(git rev-parse --show-toplevel)/.git/hooks/pre-commit.ps1`" `"`$@`"`n"
+    Set-Content -Path $shimDest -Value $shimContent -NoNewline -Encoding ascii
+    # Git for Windows respects exec bit on hooks even on NTFS via core.filemode=false; chmod is best effort
+    if ($IsLinux -or $IsMacOS) {
+        chmod +x $shimDest
+    }
+    Write-Host "  installed: $shimDest" -ForegroundColor Green
+}

@@ -308,3 +308,25 @@ Describe "Setup-CCClientSetup.ps1 - Install-ClaudeMd" {
         $content | Should -Match "実装許可制"
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - Install-GitConventions" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        . $script:SetupScript
+        $script:TmpProject4 = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-proj4-" + [System.Guid]::NewGuid()) -Force
+        Push-Location $script:TmpProject4
+        git init -b main -q
+        Pop-Location
+    }
+    AfterAll {
+        Remove-Item $script:TmpProject4 -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    It "Install-GitConventions should place .gitignore" {
+        Install-GitConventions -ProjectRoot $script:TmpProject4 -RepoRoot $script:RepoRoot
+        Test-Path (Join-Path $script:TmpProject4 ".gitignore") | Should -Be $true
+    }
+    It "Install-GitConventions should place .git/hooks/pre-commit shim + pre-commit.ps1" {
+        Test-Path (Join-Path $script:TmpProject4 ".git/hooks/pre-commit") | Should -Be $true
+        Test-Path (Join-Path $script:TmpProject4 ".git/hooks/pre-commit.ps1") | Should -Be $true
+    }
+}
