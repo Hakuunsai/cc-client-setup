@@ -330,3 +330,27 @@ Describe "Setup-CCClientSetup.ps1 - Install-GitConventions" {
         Test-Path (Join-Path $script:TmpProject4 ".git/hooks/pre-commit.ps1") | Should -Be $true
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - Install-SecretaryDir" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        . $script:SetupScript
+        $script:TmpProject5 = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-proj5-" + [System.Guid]::NewGuid()) -Force
+    }
+    AfterAll {
+        Remove-Item $script:TmpProject5 -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    It "Install-SecretaryDir should create .company/secretary/{todos,notes,inbox}" {
+        Install-SecretaryDir -ProjectRoot $script:TmpProject5 -RepoRoot $script:RepoRoot
+        Test-Path (Join-Path $script:TmpProject5 ".company/CLAUDE.md") | Should -Be $true
+        Test-Path (Join-Path $script:TmpProject5 ".company/secretary/todos") | Should -Be $true
+        Test-Path (Join-Path $script:TmpProject5 ".company/secretary/notes") | Should -Be $true
+        Test-Path (Join-Path $script:TmpProject5 ".company/secretary/inbox") | Should -Be $true
+    }
+    It "Install-SecretaryDir should preserve existing notes (not touch user .md)" {
+        $userNote = Join-Path $script:TmpProject5 ".company/secretary/notes/2026-01-01-decisions.md"
+        Set-Content $userNote "USER CONTENT"
+        Install-SecretaryDir -ProjectRoot $script:TmpProject5 -RepoRoot $script:RepoRoot
+        (Get-Content $userNote -Raw) | Should -Match "USER CONTENT"
+    }
+}

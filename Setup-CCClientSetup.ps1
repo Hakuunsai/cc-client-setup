@@ -159,3 +159,36 @@ function Install-GitConventions {
     }
     Write-Host "  installed: $shimDest" -ForegroundColor Green
 }
+
+function Install-SecretaryDir {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$ProjectRoot,
+        [Parameter(Mandatory=$true)] [string]$RepoRoot
+    )
+    Write-Host "Install-SecretaryDir: $ProjectRoot/.company/" -ForegroundColor Cyan
+
+    # .company/ + .company/secretary/{todos,notes,inbox}/ 確保
+    foreach ($sub in @(".company/secretary/todos", ".company/secretary/notes", ".company/secretary/inbox")) {
+        $p = Join-Path $ProjectRoot $sub
+        New-Item -ItemType Directory -Path $p -Force | Out-Null
+    }
+
+    # .company/CLAUDE.md は新規時のみ配置 (既存中身は touch しない)
+    $claudeMdDest = Join-Path $ProjectRoot ".company/CLAUDE.md"
+    if (-not (Test-Path $claudeMdDest)) {
+        Copy-Item (Join-Path $RepoRoot "templates/company-secretary/CLAUDE.md") $claudeMdDest -Force
+        Write-Host "  installed: $claudeMdDest" -ForegroundColor Green
+    } else {
+        Write-Host "  preserved (existing): $claudeMdDest" -ForegroundColor DarkGray
+    }
+
+    # .gitkeep 配置 (idempotent)
+    foreach ($sub in @("todos", "notes", "inbox")) {
+        $gitkeep = Join-Path $ProjectRoot ".company/secretary/$sub/.gitkeep"
+        if (-not (Test-Path $gitkeep)) {
+            New-Item -ItemType File -Path $gitkeep -Force | Out-Null
+        }
+    }
+    Write-Host "  ensured: .company/secretary/{todos,notes,inbox}/.gitkeep" -ForegroundColor Green
+}
