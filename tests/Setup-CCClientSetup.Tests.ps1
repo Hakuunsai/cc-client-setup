@@ -258,3 +258,29 @@ Describe "Setup-CCClientSetup.ps1 - Install-ClaudeCodeRules" {
         $backups.Count | Should -BeGreaterOrEqual 1
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - Install-ClaudeCodeSettings" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        . $script:SetupScript
+        $script:FakeHome2 = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-home2-" + [System.Guid]::NewGuid()) -Force
+    }
+    AfterAll {
+        if ($script:FakeHome2 -and (Test-Path $script:FakeHome2)) {
+            Remove-Item $script:FakeHome2 -Recurse -Force
+        }
+    }
+    It "Install-ClaudeCodeSettings should place settings.json with <USER> substituted" {
+        Install-ClaudeCodeSettings -HomeRoot $script:FakeHome2 -RepoRoot $script:RepoRoot -UserName "testuser"
+        $settingsPath = Join-Path $script:FakeHome2 ".claude/settings.json"
+        Test-Path $settingsPath | Should -Be $true
+        $content = Get-Content $settingsPath -Raw
+        $content | Should -Match "C:/Users/testuser/.claude/hooks/PreToolUse-DenyDangerous.ps1"
+        $content | Should -Not -Match "<USER>"
+    }
+    It "Install-ClaudeCodeHooks should copy 2 hook scripts" {
+        Install-ClaudeCodeHooks -HomeRoot $script:FakeHome2 -RepoRoot $script:RepoRoot
+        Test-Path (Join-Path $script:FakeHome2 ".claude/hooks/PreToolUse-DenyDangerous.ps1") | Should -Be $true
+        Test-Path (Join-Path $script:FakeHome2 ".claude/hooks/PostToolUse-AutoCheckpoint.ps1") | Should -Be $true
+    }
+}

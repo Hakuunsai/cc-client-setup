@@ -60,3 +60,44 @@ function Install-ClaudeCodeRules {
         Write-Host "  installed: $destPath" -ForegroundColor Green
     }
 }
+
+function Install-ClaudeCodeSettings {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$HomeRoot,
+        [Parameter(Mandatory=$true)] [string]$RepoRoot,
+        [Parameter(Mandatory=$true)] [string]$UserName
+    )
+    Write-Host "Install-ClaudeCodeSettings: $HomeRoot/.claude/settings.json (USER=$UserName)" -ForegroundColor Cyan
+    $destDir = Join-Path $HomeRoot ".claude"
+    New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+
+    $srcPath = Join-Path $RepoRoot "templates/settings.json.template"
+    $destPath = Join-Path $destDir "settings.json"
+    Backup-IfExists -Path $destPath
+
+    $content = Get-Content $srcPath -Raw
+    $content = $content -replace "<USER>", $UserName
+    Set-Content -Path $destPath -Value $content -NoNewline
+    Write-Host "  installed: $destPath" -ForegroundColor Green
+}
+
+function Install-ClaudeCodeHooks {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$HomeRoot,
+        [Parameter(Mandatory=$true)] [string]$RepoRoot
+    )
+    Write-Host "Install-ClaudeCodeHooks: $HomeRoot/.claude/hooks/" -ForegroundColor Cyan
+    $destDir = Join-Path $HomeRoot ".claude/hooks"
+    New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+
+    $srcDir = Join-Path $RepoRoot "hooks"
+    foreach ($file in @("PreToolUse-DenyDangerous.ps1", "PostToolUse-AutoCheckpoint.ps1")) {
+        $srcPath = Join-Path $srcDir $file
+        $destPath = Join-Path $destDir $file
+        Backup-IfExists -Path $destPath
+        Copy-Item $srcPath $destPath -Force
+        Write-Host "  installed: $destPath" -ForegroundColor Green
+    }
+}
