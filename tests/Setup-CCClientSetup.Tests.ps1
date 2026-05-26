@@ -415,3 +415,65 @@ Describe "Setup-CCClientSetup.ps1 - end-to-end" {
         $backups.Count | Should -BeGreaterOrEqual 3
     }
 }
+
+Describe "docs/installation.md" {
+    BeforeAll {
+        $script:InstallationPath = Join-Path $script:RepoRoot "docs/installation.md"
+    }
+    It "Should exist" {
+        Test-Path $script:InstallationPath | Should -Be $true
+    }
+    It "Should mention Claude Code Windows install" {
+        Get-Content $script:InstallationPath -Raw | Should -Match "Claude Code"
+    }
+    It "Should mention Git for Windows install" {
+        Get-Content $script:InstallationPath -Raw | Should -Match "Git for Windows"
+    }
+    It "Should mention Setup-CCClientSetup.ps1 invocation" {
+        Get-Content $script:InstallationPath -Raw | Should -Match "Setup-CCClientSetup\.ps1"
+    }
+}
+
+Describe "docs/client-cheatsheet.md" {
+    BeforeAll {
+        $script:CheatsheetPath = Join-Path $script:RepoRoot "docs/client-cheatsheet.md"
+    }
+    It "Should exist" {
+        Test-Path $script:CheatsheetPath | Should -Be $true
+    }
+    It "Should mention 巻き戻し / git stash list" {
+        Get-Content $script:CheatsheetPath -Raw | Should -Match "巻き戻し|git stash list"
+    }
+    It "Should mention 実装許可制 reminder" {
+        Get-Content $script:CheatsheetPath -Raw | Should -Match "実装|許可"
+    }
+}
+
+Describe "docs/recovery.md" {
+    BeforeAll {
+        $script:RecoveryPath = Join-Path $script:RepoRoot "docs/recovery.md"
+    }
+    It "Should exist" {
+        Test-Path $script:RecoveryPath | Should -Be $true
+    }
+    It "Should mention git reflog and git reset" {
+        $content = Get-Content $script:RecoveryPath -Raw
+        $content | Should -Match "git reflog"
+        $content | Should -Match "git reset"
+    }
+}
+
+Describe "README.md (final)" {
+    BeforeAll {
+        $script:ReadmePath = Join-Path $script:RepoRoot "README.md"
+    }
+    It "Should contain version v0.1.0" {
+        Get-Content $script:ReadmePath -Raw | Should -Match "v0\.1\.0"
+    }
+    It "Should link to docs/installation.md" {
+        Get-Content $script:ReadmePath -Raw | Should -Match "docs/installation\.md"
+    }
+    It "Should mention private distribution" {
+        Get-Content $script:ReadmePath -Raw | Should -Match "private"
+    }
+}
