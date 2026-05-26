@@ -171,6 +171,15 @@ Describe "hooks/PreToolUse-DenyDangerous.ps1" {
     It "Should read stdin JSON" {
         Get-Content $script:PreHookPath -Raw | Should -Match "ConvertFrom-Json|\\\$input|System\.Console::In"
     }
+    It "Should wrap ConvertFrom-Json in try/catch" {
+        Get-Content $script:PreHookPath -Raw | Should -Match "try\s*\{[^}]*ConvertFrom-Json"
+    }
+    It "Should detect pwsh -c variant (not just powershell -Command)" {
+        Get-Content $script:PreHookPath -Raw | Should -Match "powershell\|pwsh"
+    }
+    It "Should detect cmd.exe variant" {
+        Get-Content $script:PreHookPath -Raw | Should -Match "cmd\\\.exe"
+    }
 }
 
 Describe "hooks/PostToolUse-AutoCheckpoint.ps1" {
@@ -188,5 +197,10 @@ Describe "hooks/PostToolUse-AutoCheckpoint.ps1" {
     }
     It "Should silently exit on git failure" {
         Get-Content $script:PostHookPath -Raw | Should -Match "ErrorActionPreference|exit 0"
+    }
+    It "Should use git stash apply (not pop) to keep checkpoint in stash list" {
+        $content = Get-Content $script:PostHookPath -Raw
+        $content | Should -Match "git stash apply"
+        $content | Should -Not -Match "git stash pop"
     }
 }

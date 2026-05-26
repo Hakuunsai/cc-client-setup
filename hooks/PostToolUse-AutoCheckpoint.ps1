@@ -18,8 +18,8 @@ try {
     # timestamp 付き auto-checkpoint stash
     $timestamp = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ss")
     $msg = "[claude-auto-checkpoint] $timestamp"
-    git stash push -u -m $msg --quiet 2>$null | Out-Null
-    git stash pop --quiet 2>$null | Out-Null
+    git stash push -u -m $msg --quiet 2>$null
+    git stash apply --quiet 2>$null
 } catch {
     # 何が起きても session は止めない
 }

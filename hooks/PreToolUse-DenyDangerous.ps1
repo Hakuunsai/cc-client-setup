@@ -8,7 +8,8 @@ $ErrorActionPreference = "Stop"
 $inputJson = [System.Console]::In.ReadToEnd()
 if (-not $inputJson) { exit 0 }
 
-$payload = $inputJson | ConvertFrom-Json
+try { $payload = $inputJson | ConvertFrom-Json -ErrorAction Stop }
+catch { exit 0 }
 $cmd = $payload.tool_input.command
 if (-not $cmd) { exit 0 }
 
@@ -21,9 +22,9 @@ $denyPatterns = @(
     @{ Name = "パッケージ install (pip)"; Regex = "^\s*pip(3)?\s+install" },
     @{ Name = "パッケージ install (npm)"; Regex = "^\s*npm\s+install" },
     @{ Name = "環境変数一括表示"; Regex = "^\s*(env|printenv|Get-ChildItem\s+Env:)" },
-    @{ Name = "ネスト実行 (powershell -Command)"; Regex = "powershell\s+-Command" },
-    @{ Name = "ネスト実行 (cmd /c)"; Regex = "cmd\s+/c" },
-    @{ Name = "ネスト実行 (bash -c)"; Regex = "bash\s+-c" }
+    @{ Name = "ネスト実行 (powershell/pwsh -Command/-c)"; Regex = "(powershell|pwsh)(\.exe)?\b.*?\s+(-Command|-c)\b" },
+    @{ Name = "ネスト実行 (cmd /c)"; Regex = "(cmd|cmd\.exe)\b.*?\s+/[cC]\b" },
+    @{ Name = "ネスト実行 (bash -c)"; Regex = "^\s*bash\b.*?\s+-c\b" }
 )
 
 foreach ($p in $denyPatterns) {
