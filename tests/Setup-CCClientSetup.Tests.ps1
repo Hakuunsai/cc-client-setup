@@ -127,3 +127,28 @@ Describe "templates/pre-commit.ps1.template" {
         Get-Content $script:PreCommitPath -Raw | Should -Match "exit 1"
     }
 }
+
+Describe "templates/company-secretary/" {
+    BeforeAll {
+        $script:SecretaryTemplateDir = Join-Path $script:RepoRoot "templates/company-secretary"
+    }
+    It "Should have CLAUDE.md" {
+        Test-Path (Join-Path $script:SecretaryTemplateDir "CLAUDE.md") | Should -Be $true
+    }
+    It "CLAUDE.md should describe decisions / learnings / inbox / todos" {
+        $content = Get-Content (Join-Path $script:SecretaryTemplateDir "CLAUDE.md") -Raw
+        $content | Should -Match "decisions"
+        $content | Should -Match "learnings"
+        $content | Should -Match "inbox"
+        $content | Should -Match "todos"
+    }
+    It "Should have secretary/todos/.gitkeep" {
+        Test-Path (Join-Path $script:SecretaryTemplateDir "secretary/todos/.gitkeep") | Should -Be $true
+    }
+    It "Should have secretary/notes/.gitkeep" {
+        Test-Path (Join-Path $script:SecretaryTemplateDir "secretary/notes/.gitkeep") | Should -Be $true
+    }
+    It "Should have secretary/inbox/.gitkeep" {
+        Test-Path (Join-Path $script:SecretaryTemplateDir "secretary/inbox/.gitkeep") | Should -Be $true
+    }
+}
