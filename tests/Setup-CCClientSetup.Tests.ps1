@@ -284,3 +284,27 @@ Describe "Setup-CCClientSetup.ps1 - Install-ClaudeCodeSettings + Install-ClaudeC
         Test-Path (Join-Path $script:FakeHome2 ".claude/hooks/PostToolUse-AutoCheckpoint.ps1") | Should -Be $true
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - Install-ClaudeMd" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        . $script:SetupScript
+        $script:TmpProject3 = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-proj3-" + [System.Guid]::NewGuid()) -Force
+        $script:FakeHome3 = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-home3-" + [System.Guid]::NewGuid()) -Force
+    }
+    AfterAll {
+        Remove-Item $script:TmpProject3 -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item $script:FakeHome3 -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    It "Install-ClaudeMd should place CLAUDE.md in PJ root" {
+        Install-ClaudeMd -ProjectRoot $script:TmpProject3 -HomeRoot $script:FakeHome3 -RepoRoot $script:RepoRoot
+        Test-Path (Join-Path $script:TmpProject3 "CLAUDE.md") | Should -Be $true
+    }
+    It "Install-ClaudeMd should place CLAUDE.md in ~/.claude/" {
+        Test-Path (Join-Path $script:FakeHome3 ".claude/CLAUDE.md") | Should -Be $true
+    }
+    It "CLAUDE.md should contain 実装許可制 keyword" {
+        $content = Get-Content (Join-Path $script:TmpProject3 "CLAUDE.md") -Raw
+        $content | Should -Match "実装許可制"
+    }
+}

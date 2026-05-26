@@ -100,3 +100,25 @@ function Install-ClaudeCodeHooks {
         Write-Host "  installed: $destPath" -ForegroundColor Green
     }
 }
+
+function Install-ClaudeMd {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$ProjectRoot,
+        [Parameter(Mandatory=$true)] [string]$HomeRoot,
+        [Parameter(Mandatory=$true)] [string]$RepoRoot
+    )
+    Write-Host "Install-ClaudeMd: $ProjectRoot/CLAUDE.md + $HomeRoot/.claude/CLAUDE.md" -ForegroundColor Cyan
+
+    $srcPath = Join-Path $RepoRoot "templates/CLAUDE.md.template"
+    foreach ($destPath in @(
+        (Join-Path $ProjectRoot "CLAUDE.md"),
+        (Join-Path $HomeRoot ".claude/CLAUDE.md")
+    )) {
+        $destDir = Split-Path $destPath -Parent
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+        Backup-IfExists -Path $destPath
+        Copy-Item $srcPath $destPath -Force
+        Write-Host "  installed: $destPath" -ForegroundColor Green
+    }
+}
