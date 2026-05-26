@@ -1,0 +1,5 @@
+# Pester test artifacts
+TestResults/
+*.bak.*
+.DS_Store
+Thumbs.db
