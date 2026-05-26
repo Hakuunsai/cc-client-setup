@@ -192,3 +192,43 @@ function Install-SecretaryDir {
     }
     Write-Host "  ensured: .company/secretary/{todos,notes,inbox}/.gitkeep" -ForegroundColor Green
 }
+
+function Initialize-ProjectGit {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$ProjectRoot,
+        [switch]$Force
+    )
+    if (-not (Test-Path $ProjectRoot)) {
+        if ($Force -or (Read-Host "  Project dir not found: $ProjectRoot - create? [y/N]") -match '^[yY]') {
+            New-Item -ItemType Directory -Path $ProjectRoot -Force | Out-Null
+            Write-Host "  created: $ProjectRoot" -ForegroundColor Green
+        } else {
+            throw "Aborted: project dir does not exist."
+        }
+    }
+
+    $gitDir = Join-Path $ProjectRoot ".git"
+    if (Test-Path $gitDir) {
+        Write-Host "Initialize-ProjectGit: .git found, skipping" -ForegroundColor DarkGray
+        return
+    }
+
+    if (-not $Force) {
+        $resp = Read-Host "  No .git found at $ProjectRoot - init? [y/N]"
+        if ($resp -notmatch '^[yY]') {
+            throw "Aborted: .git initialization declined."
+        }
+    }
+    Write-Host "Initialize-ProjectGit: git init in $ProjectRoot" -ForegroundColor Cyan
+    Push-Location $ProjectRoot
+    try {
+        git init -b main -q
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $ProjectRoot ".git"))) {
+            throw "git init failed (exit $LASTEXITCODE) or .git not created at $ProjectRoot"
+        }
+        Write-Host "  git init -b main: done" -ForegroundColor Green
+    } finally {
+        Pop-Location
+    }
+}

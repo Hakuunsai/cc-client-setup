@@ -354,3 +354,33 @@ Describe "Setup-CCClientSetup.ps1 - Install-SecretaryDir" {
         (Get-Content $userNote -Raw) | Should -Match "USER CONTENT"
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - Initialize-ProjectGit" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        . $script:SetupScript
+    }
+    It "Initialize-ProjectGit should create .git when missing (force mode)" {
+        $tmp = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-git-" + [System.Guid]::NewGuid()) -Force
+        try {
+            Initialize-ProjectGit -ProjectRoot $tmp -Force
+            Test-Path (Join-Path $tmp ".git") | Should -Be $true
+        } finally {
+            Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+    It "Initialize-ProjectGit should be no-op when .git exists" {
+        $tmp = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-git2-" + [System.Guid]::NewGuid()) -Force
+        try {
+            Push-Location $tmp
+            git init -b main -q
+            Pop-Location
+            $beforeHead = Get-Content (Join-Path $tmp ".git/HEAD") -Raw
+            Initialize-ProjectGit -ProjectRoot $tmp -Force
+            $afterHead = Get-Content (Join-Path $tmp ".git/HEAD") -Raw
+            $afterHead | Should -Be $beforeHead
+        } finally {
+            Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
