@@ -172,3 +172,21 @@ Describe "hooks/PreToolUse-DenyDangerous.ps1" {
         Get-Content $script:PreHookPath -Raw | Should -Match "ConvertFrom-Json|\\\$input|System\.Console::In"
     }
 }
+
+Describe "hooks/PostToolUse-AutoCheckpoint.ps1" {
+    BeforeAll {
+        $script:PostHookPath = Join-Path $script:RepoRoot "hooks/PostToolUse-AutoCheckpoint.ps1"
+    }
+    It "Should exist" {
+        Test-Path $script:PostHookPath | Should -Be $true
+    }
+    It "Should use git stash for checkpointing" {
+        Get-Content $script:PostHookPath -Raw | Should -Match "git stash"
+    }
+    It "Should mention claude-auto-checkpoint label" {
+        Get-Content $script:PostHookPath -Raw | Should -Match "claude-auto-checkpoint"
+    }
+    It "Should silently exit on git failure" {
+        Get-Content $script:PostHookPath -Raw | Should -Match "ErrorActionPreference|exit 0"
+    }
+}
