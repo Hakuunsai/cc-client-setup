@@ -40,3 +40,23 @@ function Backup-IfExists {
         Write-Host "  backed up: $Path -> $backupPath" -ForegroundColor DarkGray
     }
 }
+
+function Install-ClaudeCodeRules {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$HomeRoot,
+        [Parameter(Mandatory=$true)] [string]$RepoRoot
+    )
+    Write-Host "Install-ClaudeCodeRules: $HomeRoot/.claude/rules/" -ForegroundColor Cyan
+    $destDir = Join-Path $HomeRoot ".claude/rules"
+    New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+
+    $srcDir = Join-Path $RepoRoot "templates/claude-rules"
+    foreach ($file in @("security-essentials.md", "forbidden-files.md", "network-security.md")) {
+        $srcPath = Join-Path $srcDir $file
+        $destPath = Join-Path $destDir $file
+        Backup-IfExists -Path $destPath
+        Copy-Item $srcPath $destPath -Force
+        Write-Host "  installed: $destPath" -ForegroundColor Green
+    }
+}

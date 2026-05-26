@@ -232,3 +232,29 @@ Describe "Setup-CCClientSetup.ps1 - Backup-IfExists" {
         { Backup-IfExists -Path $missing } | Should -Not -Throw
     }
 }
+
+Describe "Setup-CCClientSetup.ps1 - Install-ClaudeCodeRules" {
+    BeforeAll {
+        $script:SetupScript = Join-Path $script:RepoRoot "Setup-CCClientSetup.ps1"
+        . $script:SetupScript
+        $script:FakeHome = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + "/cc-home-" + [System.Guid]::NewGuid()) -Force
+    }
+    AfterAll {
+        if ($script:FakeHome -and (Test-Path $script:FakeHome)) {
+            Remove-Item $script:FakeHome -Recurse -Force
+        }
+    }
+    It "Install-ClaudeCodeRules should copy 3 rule files to ~/.claude/rules/" {
+        Install-ClaudeCodeRules -HomeRoot $script:FakeHome -RepoRoot $script:RepoRoot
+        Test-Path (Join-Path $script:FakeHome ".claude/rules/security-essentials.md") | Should -Be $true
+        Test-Path (Join-Path $script:FakeHome ".claude/rules/forbidden-files.md") | Should -Be $true
+        Test-Path (Join-Path $script:FakeHome ".claude/rules/network-security.md") | Should -Be $true
+    }
+    It "Install-ClaudeCodeRules should be idempotent (existing file backed up)" {
+        $existing = Join-Path $script:FakeHome ".claude/rules/security-essentials.md"
+        Set-Content $existing "PRE-EXISTING"
+        Install-ClaudeCodeRules -HomeRoot $script:FakeHome -RepoRoot $script:RepoRoot
+        $backups = Get-ChildItem -Path (Join-Path $script:FakeHome ".claude/rules") -Filter "security-essentials.md.bak.*"
+        $backups.Count | Should -BeGreaterOrEqual 1
+    }
+}
