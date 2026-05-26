@@ -47,3 +47,21 @@ Describe "templates/claude-rules/" {
         $content | Should -Match "Invoke-WebRequest|Invoke-RestMethod"
     }
 }
+
+Describe "templates/CLAUDE.md.template" {
+    BeforeAll {
+        $script:ClaudeMdPath = Join-Path $script:RepoRoot "templates/CLAUDE.md.template"
+    }
+    It "Should exist" {
+        Test-Path $script:ClaudeMdPath | Should -Be $true
+    }
+    It "Should contain 実装許可制 keyword" {
+        Get-Content $script:ClaudeMdPath -Raw | Should -Match "実装許可制"
+    }
+    It "Should reference rules/forbidden-files.md" {
+        Get-Content $script:ClaudeMdPath -Raw | Should -Match "forbidden-files\.md"
+    }
+    It "Should mention 秘書 / .company/secretary/" {
+        Get-Content $script:ClaudeMdPath -Raw | Should -Match "秘書|\.company/secretary"
+    }
+}
