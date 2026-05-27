@@ -31,7 +31,7 @@
 
 「秘書以外の skill (git-workflow / superpowers:* 等) は Claude が context 判断で自動発動します。client は意識不要です。」
 
-## 5 柱 (セキュリティ + 実装許可制 + git + 自動記録 + 秘書連携)
+## 6 柱 (セキュリティ + 実装許可制 + git + 自動記録 + 秘書連携 + Codex 自動委譲)
 
 ### 1. セキュリティ rules 参照
 
@@ -69,11 +69,32 @@ memory baseline (`~/.cc-client-memory/seed-baseline-security.md`) も常時参�
 
 同日 1 file の追記、新規 file 作成は別日のみ。ファイル操作前に必ず今日の日付を確認。
 
-## 連携 plugin (cc-company / git-workflow / superpowers)
+### 6. Codex 自動委譲規律 (品質担保のため別 AI 委譲)
+
+秘書は以下の trigger で **Codex (= 別 AI)** に自動委譲します。client が明示指示する必要なし、ただし発動時は秘書が業務言語で予告します。
+
+| 委譲種別 | 自動発動 trigger | client 視点予告文言 |
+|---|---|---|
+| **レビュー (ダブルチェック)** | (a) コード変更を伴う完了報告の直前<br>(b) git commit 指示時<br>(c) client が「レビューして」「チェックして」明示 | 「別の AI (Codex) にダブルチェックさせます」 |
+| **実装委譲 (substantial coding)** | (a) 中規模以上 (複数ファイル / DB アクセス / 外部 API / refactor / 業務ロジック変更)<br>(b) 秘書が stuck / second pass 必要と判断<br>(c) client が「Codex に任せて」明示 | 「別の AI (Codex) に始めから書いてもらいます」 |
+
+**委譲しない case**: typo / フォーマット / 1 ファイル完結軽微変更 / ドキュメント・コメントのみ / 業務 hearing・壁打ち。
+
+**Codex sandbox 規律** (秘書が自動付与、3 重防御):
+- 層 1: Codex CLI sandbox option (`workspace-write` + cwd 限定)
+- 層 2: prompt prefix「client 代行モード」(`{company-name}/templates/codex-prompts/client-delegation-prefix.md` テンプレート参照)
+- 層 3: 秘書 verify gate (forbidden-files / `~/.cc-client-memory/` 等のパス侵害 grep 検出)
+
+**access 禁止** (Codex 完全 access 禁止): `~/.codex/auth.json`, `~/.cc-client-memory/`, `~/.claude/`, `*.env`, `*.secret`, secrets 系全般 (= forbidden-files 規律継承)。
+
+**Codex 利用不能時** (認証切れ / network / rate limit / 応答なし): 秘書がユーザーに業務言語で説明 + Claude 単独で task 継続。owner connect は使わない (秘書視点 owner 不存在 principle 適用)。
+
+## 連携 plugin (cc-company / git-workflow / superpowers / codex)
 
 - **cc-company**: 秘書 (常駐窓口) — `/company:company` で発動、`{company-name}/.company/secretary/` に直接書込
 - **git-workflow**: git 操作のミス防止 + 危険操作の確認 — "コミットして" 等で自動発動
 - **superpowers**: 設計 / 計画 / 実装 / debug / review 系の skill 群 (using-superpowers + brainstorming + writing-plans + executing-plans + subagent-driven-development + receiving-code-review + requesting-code-review + systematic-debugging + verification-before-completion) — context 判断で自動発動
+- **codex** (v0.5 追加): 別 AI (OpenAI Codex) によるレビュー / 実装委譲 — 秘書判断で自動発動 (本 file「6 柱」§6 参照)
 
 ## トラブル / 不明時の対応
 
