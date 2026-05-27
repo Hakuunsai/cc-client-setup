@@ -76,7 +76,7 @@ memory baseline (`~/.cc-client-memory/seed-baseline-security.md`) も常時参�
 ## トラブル / 不明時の対応
 
 - client 「これ拒否されました」「動かない」「壊れた」等 → 秘書が `~/.cc-client-memory/seed-client-persona.md` の owner contact 方針を参照、(a) 完全代行 なら必ず owner 連絡を案内、(b) 自己解決推奨 なら秘書経由で軽微解決を試行
-- `git reflog` / `git reset` / `claude-checkpoints` branch (auto-checkpoint hook 配備済) で「壊した」case の復旧支援
+- `git reflog` / `git reset` / `git stash list` (auto-checkpoint hook で `[claude-auto-checkpoint] ...` stash 配備済) で「壊した」case の復旧支援
 - 詳細は `~/.cc-client-memory/seed-client-persona.md` の owner 連絡先 + `~/...{company-name}/docs/recovery.md` (kit 同梱) 参照
 
 ## owner-handoff (本 file 由来)

@@ -42,7 +42,7 @@ owner クライアント (プログラミング未経験者) 向け Claude Code 
 - `hooks/inject-auto-company-skill.sh` - SessionStart hook (Claude に `/company:company` 自動発動を指示)
 - `hooks/memory-local-commit.sh` - Stop hook (`~/.cc-client-memory/` local commit)
 - `hooks/PreToolUse-DenyDangerous.ps1` - Bash 危険操作 deny (Phase 1 流用、Codex review 反映済)
-- `hooks/PostToolUse-AutoCheckpoint.ps1` - Edit/Write 後 `claude-checkpoints` branch auto commit (Phase 1 流用)
+- `hooks/PostToolUse-AutoCheckpoint.ps1` - Edit/Write 後 `git stash` で `[claude-auto-checkpoint] ...` を auto stash (Phase 1 流用、stash 方式)
 
 ### Docs
 
