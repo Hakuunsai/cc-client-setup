@@ -266,6 +266,8 @@ chat に以下を出力:
 - {company-name}/ : .claude/settings.json + CLAUDE.md + .gitignore + .git/hooks/pre-commit + .company/secretary/
 - enabled plugin : 2 (company + superpowers) + direct skill : 1 (git-workflow @ ~/.claude/skills/git-workflow/SKILL.md)
 
+【秘書振舞い (v0.4)】 ✅ skill 自動発動規律配備済 (brainstorming / writing-plans / systematic-debugging / verification-before-completion / receiving-code-review / requesting-code-review / dispatching-parallel-agents / git-workflow を秘書自律発動、client は skill 名意識不要)
+
 【Phase A (owner hearing)】 ✅ 完了 (owner answer 済、Q-owner-1〜4 実値が seed-client-persona.md owner 領域に注入)
 
 【Phase B (client hearing)】 ⏳ pending (marker `<<<CLIENT_HEARING_PENDING>>>` で wait)

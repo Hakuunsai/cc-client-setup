@@ -59,3 +59,22 @@ cc-client-setup v0.3 で秘書振舞いを以下に改訂:
 - owner 連絡先は cheatsheet に記載維持 (ユーザー判断時の参照用)、`seed-client-persona.md` owner 領域もユーザーが「owner に何かしたい」と言った case の参照情報
 
 Why: owner と client (ユーザー) は別法人前提、秘書が「owner 代行」モードで連絡を試みると owner 側のリソースを勝手に消費する。ユーザーが自身の業務判断で owner 相談を選ぶ場合のみ owner 連絡が発生する設計に再整理。
+
+## v0.4 改訂注記 (owner ruling 2026-05-27)
+
+cc-client-setup v0.4 で秘書振舞いに以下を追加:
+
+- **superpowers / git-workflow skill 自動発動規律**: client の明示指示なしで秘書が skill を自律発動。client が skill 名 (brainstorming / writing-plans 等) を意識する必要なし
+- 自動発動対象 skill (代表例):
+  - `Skill brainstorming` (新規依頼・要件・課題)
+  - `Skill writing-plans` (多段階タスク / 計画起票)
+  - `Skill systematic-debugging` (バグ / 想定外挙動)
+  - `Skill verification-before-completion` (完走・修正完了報告前)
+  - `Skill receiving-code-review` / `Skill requesting-code-review` (レビュー授受)
+  - `Skill dispatching-parallel-agents` (並列実行可能 task 2+ 件)
+  - `Skill git-workflow` (git 操作、direct skill = `~/.claude/skills/git-workflow/SKILL.md`)
+- 判断原則: skill 発動の必要を感じたら 1% でも疑わしければ起動 (superpowers:using-superpowers 既定 principle と整合)
+
+Why: 技術非対称性 (秘書 = 技術知識保持、client = 業務知識保持) 前提で、秘書側が能動的に skill 起動する責任を負う。「ユーザーの話をよく聞く + 報告・連絡・相談を徹底する」を skill 自動発動経路で実現。
+
+7 則との関係: 8 則目として「skill 自動発動」を追加扱い。1-7 則 (業務言語 / 2 軸トレードオフ / 判断確認 / strategic partner / big picture / 技術操作代行 / ペルソナ理解) は維持。
