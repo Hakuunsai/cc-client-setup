@@ -1,4 +1,22 @@
-# cc-client-setup backlog (v0.5.0)
+# cc-client-setup backlog (v0.6.0)
+
+## v0.6.0 秘書 self-update orchestration sprint 完走 (2026-05-27)
+
+owner / client が「cc-client 更新して」「kit 更新」「アップデート」trigger で kit-prompt 最新版 fetch + placeholders 置換 + 新 claude session paste 案内を秘書が自動オーケストレーション。v0.5 で確立した「秘書自動発動」「Codex 自動委譲 explicit 予告」pattern の自然な拡張。
+
+| Layer | 内容 |
+|---|---|
+| Layer A (秘書振舞い) | secretary-claude.md.template に「cc-client 更新」trigger 行追加 + 新規 section「cc-client self-update 規律」追加 (Step A-D + 業務言語化規律 + 取得失敗 case fallback) |
+| Layer B (kit-prompt self-document) | kit-prompt.md Step 14 owner 伝達文言に v0.6 self-update 経路周知追加、冒頭 title v0.6 bump |
+| Layer C (cheatsheet 業務言語化) | client-cheatsheet.md.template「秘書 (Claude) との会話」section に self-update trigger 案内 1 行追加 |
+
+fetch URL: `https://raw.githubusercontent.com/Hakuunsai/cc-client-setup/main/kit-prompt.md` (main HEAD 固定、owner ruling 2026-05-27)。
+
+demo-001 verify は v0.5 + v0.6 まとめて別日 owner manual (= 「cc-client 更新して」trigger 経路自体を verify、kit-prompt 再実行で配備物 verify)。
+
+sprint contract: [office-tada `.company/projects/cc-client-setup/backlogs/2026-05-27-v0.6-self-update-sprint-contract.md`](https://github.com/Hakuunsai/office-tada-secretary)。
+
+spec source of truth: [office-tada `docs/superpowers/specs/2026-05-27-cc-client-setup-v0.6-self-update-design.md`](https://github.com/Hakuunsai/office-tada-secretary)。
 
 ## v0.5.0 Codex 委譲統合 sprint 完走 (2026-05-27)
 
