@@ -6,11 +6,15 @@
     },
     "claude-plugins-official": {
       "source": { "source": "github", "repo": "anthropics/claude-plugins-official" }
+    },
+    "openai-codex": {
+      "source": { "source": "github", "repo": "openai/codex-plugin-cc" }
     }
   },
   "enabledPlugins": {
     "company@cc-company": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "codex@openai-codex": true
   },
   "permissions": {
     "defaultMode": "default",
@@ -27,6 +31,8 @@
       "Bash(powershell -Command:*)",
       "Bash(cmd /c:*)",
       "Bash(bash -c:*)",
+      "Bash(codex:*)",
+      "Bash(codex)",
       "Read(.env)",
       "Read(.env.*)",
       "Read(*.pem)",
