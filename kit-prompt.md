@@ -1,4 +1,4 @@
-# cc-client-setup v0.5 - Claude Code Self-Setup Prompt (Codex 委譲統合)
+# cc-client-setup v0.6 - Claude Code Self-Setup Prompt (Codex 委譲統合 + self-update)
 
 このプロンプトは Claude Code (あなた) が、クライアント PC に Claude Code 環境を
 自律でセットアップするための指示書です。owner ご了承前提、本指示書を実行することを承諾します。
@@ -40,7 +40,7 @@
 - [ ] **Step 11.6 (owner manual、v0.5 追加)**: `codex login` OAuth flow 案内 (ブラウザ login)、`~/.codex/auth.json` 配備確認
 - [ ] **Step 12**: 完了確認 (各配置物 grep + 4 hook 存在 + plugin enabled state + `~/.cc-client-memory/seed-client-persona.md` 内 Phase B marker 存在 + Codex 実体配備 + `codex@openai-codex` plugin enabled、v0.5 拡張)
 - [ ] **Step 13**: cheatsheet 出力 (placeholder 置換版を chat に出力、owner が印刷 / PDF 化して client に渡す)
-- [ ] **Step 14**: Phase B (client hearing) の状況説明 + v0.5 Codex 委譲統合説明 (owner に「次の claude 再起動で client hearing が走る」+「秘書が必要に応じて別の AI (Codex) にダブルチェック / 実装委譲を自動で行う」と伝達)
+- [ ] **Step 14**: Phase B + v0.5 Codex + v0.6 self-update 状況説明 (owner に「次の claude 再起動で client hearing が走る」+「秘書が必要に応じて別の AI (Codex) にダブルチェック / 実装委譲を自動で行う」+「次に kit を更新したい case は秘書に『cc-client 更新して』と言うだけ」と伝達)
 
 ## 各 Step の具体 command
 
@@ -324,15 +324,20 @@ owner は出力を copy → Word / PDF / 紙印刷で client に渡す。
 chat に以下を出力:
 
 ```
-✅ cc-client-setup v0.2 setup 完了
+✅ cc-client-setup v0.6 setup 完了
 
 【配置物】
 - ~/.claude/{rules, CLAUDE.md, settings.json, hooks/} : 4 種 (rules 3 + CLAUDE.md 1 + settings.json 1 + hooks 4)
 - ~/.cc-client-memory/ : 4 seed file (3 baseline + 1 client persona = owner 領域実値 + Phase B marker)
 - {company-name}/ : .claude/settings.json + CLAUDE.md + .gitignore + .git/hooks/pre-commit + .company/secretary/
-- enabled plugin : 2 (company + superpowers) + direct skill : 1 (git-workflow @ ~/.claude/skills/git-workflow/SKILL.md)
+- enabled plugin : 3 (company + superpowers + codex、v0.5 で codex 追加) + direct skill : 1 (git-workflow @ ~/.claude/skills/git-workflow/SKILL.md)
+- Codex CLI : Node.js + @openai/codex install + `codex login` OAuth (~/.codex/auth.json cache)
+- Codex prompt prefix template : {company-name}/templates/codex-prompts/client-delegation-prefix.md
 
-【秘書振舞い (v0.4)】 ✅ skill 自動発動規律配備済 (brainstorming / writing-plans / systematic-debugging / verification-before-completion / receiving-code-review / requesting-code-review / dispatching-parallel-agents / git-workflow を秘書自律発動、client は skill 名意識不要)
+【秘書振舞い (v0.4 + v0.5 + v0.6)】 ✅ 自動発動規律配備済
+- v0.4: skill 自動発動 (brainstorming / writing-plans / systematic-debugging / verification-before-completion / receiving-code-review / requesting-code-review / dispatching-parallel-agents / git-workflow を秘書自律発動)
+- v0.5: Codex 自動委譲 (review + 実装委譲 を秘書判断 + explicit 予告 + client 了承後発動、sandbox 3 重防御)
+- v0.6: cc-client self-update orchestration (「cc-client 更新して」「アップデート」trigger で kit 最新化を秘書自律案内)
 
 【Phase A (owner hearing)】 ✅ 完了 (owner answer 済、Q-owner-1〜4 実値が seed-client-persona.md owner 領域に注入)
 
@@ -345,6 +350,10 @@ chat に以下を出力:
 【owner 同席なら今すぐ Phase B 実行可】
 - 今、claude を再起動 (Ctrl+C → claude) → client を同席させて秘書 hearing を実行できます。
 - client 単独持ち帰り後でも、初回起動時に同じ hearing が自動で走ります。
+
+【次に kit を更新したい case (v0.6 追加)】
+- 秘書に「cc-client 更新して」「アップデート」と言うだけで OK。秘書が最新版を取得し、新しい terminal で paste 実行する手順を案内します。
+- owner 手動の slash command (plugin install) と Codex login が一部残ります、案内が出たら従ってください。
 
 【cheatsheet】
 - Step 13 で chat に出力した cheatsheet を印刷 / PDF 化 → 紙で client に渡してください。
