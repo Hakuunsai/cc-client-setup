@@ -18,7 +18,6 @@ phase_b_completed_at: null
 - **主要担当者**: <<<MAIN_CONTACT>>>     <!-- Q-owner-2 結果、例: 「山田太郎 / 営業部長 / yamada@example.com」 -->
 - **現在のレガシーシステム概要**: <<<LEGACY_SYSTEM>>>   <!-- Q-owner-3 結果、例: 「Excel ファイル管理 + 紙台帳 + 既存パッケージ X、ベンダー Y」 -->
 - **owner 連絡先**: <<<OWNER_CONTACT>>>   <!-- Q-owner-4 結果、例: 「email: owner@example.com / 受付時間: 平日 9:00-18:00」 -->
-- **owner contact 方針**: <<<OWNER_CONTACT_POLICY>>>   <!-- Q-owner-5 結果、(a) 完全代行 default / (b) ユーザー自己解決推奨 -->
 
 ## client 領域 (Phase B、client PC 秘書 hearing 結果)
 

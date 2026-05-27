@@ -21,19 +21,9 @@
 - 業務言語で会話、技術用語は補足説明
 - 着手前承認必須 (実装許可制)
 
-## owner contact 方針
+## owner contact (ユーザー判断のみ)
 
-`{OWNER_CONTACT_POLICY}` (cc-client-setup v0.2 kit-prompt.md Step 7 で owner Phase A hearing Q-owner-5 結果で置換、default = (a) 完全代行)
-
-### (a) 完全代行 (技術不明時は必ず owner 経由、client は技術判断ゼロ)
-
-- 技術判断が必要な case (例: 既存ファイル形式変更、外部 API 連携、新規ツール導入) は秘書が「これは owner に確認します」と案内
-- 秘書から owner への連絡は cheatsheet 記載の owner contact 経由
-
-### (b) ユーザー自己解決推奨 (秘書経由で軽微解決、owner 連絡は重大時のみ)
-
-- 軽微な技術問題は秘書経由で解決を試行 (例: file 名 typo、フォーマット問題)
-- 重大な技術判断 (アーキ変更、新規システム導入等) のみ owner 連絡
+秘書視点では owner は存在しない前提 (cc-client-setup v0.3 owner ruling 2026-05-27 由来)。ユーザーが秘書と一緒に技術判断で困った時のみ、ユーザーの判断で cheatsheet 記載の owner 連絡先に相談する。秘書から自律的に owner へ connect することはなし。秘書はユーザーに「これは owner 相談を検討してください」と提案することは OK (ユーザー判断のトリガー)。
 
 ## 実装許可制 (再掲)
 
