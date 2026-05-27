@@ -10,7 +10,6 @@
   },
   "enabledPlugins": {
     "company@cc-company": true,
-    "git-workflow@cc-company": true,
     "superpowers@claude-plugins-official": true
   },
   "permissions": {

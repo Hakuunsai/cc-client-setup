@@ -34,7 +34,8 @@
 - [ ] **Step 8**: `.gitignore` 配置 (cwd 相対、generic Windows + 言語中立)
 - [ ] **Step 9**: cwd で git init (未 init なら) + `.git/hooks/pre-commit` (sh shim) + `.git/hooks/pre-commit.ps1` (本体) 配置 + 初回 commit
 - [ ] **Step 10**: `.company/secretary/` 配置 (cwd 相対、CLAUDE.md + 空 inbox/todos/notes、cc-company plugin 利用前提)
-- [ ] **Step 11**: plugin install (`/plugin marketplace add` + `/plugin install` × 3 = cc-company + git-workflow + superpowers)
+- [ ] **Step 11a (Claude 自動)**: `~/.claude/skills/git-workflow/SKILL.md` 配置 (cc-company marketplace 経由 plugin 提供がないため direct skill 配置、v0.4 で経路追加)
+- [ ] **Step 11b (owner manual)**: plugin install (`/plugin marketplace add` + `/plugin install` × 2 = cc-company + superpowers)
 - [ ] **Step 12**: 完了確認 (各配置物 grep + 4 hook 存在 + plugin enabled state + `~/.cc-client-memory/seed-client-persona.md` 内 Phase B marker 存在)
 - [ ] **Step 13**: cheatsheet 出力 (placeholder 置換版を chat に出力、owner が印刷 / PDF 化して client に渡す)
 - [ ] **Step 14**: Phase B (client hearing) の状況説明 (owner に「次の claude 再起動で client hearing が走る」と伝達)
@@ -179,11 +180,25 @@ git add .company/
 git commit -m "Add secretary dir (cc-company integration)"
 ```
 
-### Step 11: plugin install (cc-company + git-workflow + superpowers) — ⚠️ owner manual step
+### Step 11a: `~/.claude/skills/git-workflow/SKILL.md` 配置 (direct skill、Claude 自動実行可)
+
+cc-company marketplace は `company` plugin のみ提供のため、git-workflow は direct skill 経路で配備する (v0.4 で経路追加、v0.3 時点の plugin install spec 誤りを是正)。
+
+```bash
+mkdir -p ~/.claude/skills/git-workflow
+```
+
+WebFetch `{kit raw URL prefix}/templates/claude-skills/git-workflow/SKILL.md` → Write `~/.claude/skills/git-workflow/SKILL.md`。既存 file あれば `*.bak.YYYYMMDDTHHmmss` backup 後 overwrite。
+
+配置後、Claude Code は次セッション以降で `git-workflow` skill を `Skill` tool 経由で自動発動可能になる。秘書は git 操作 (commit / push / branch / worktree 等) の trigger で本 skill を自律発動する (本 client は技術用語を意識する必要なし)。
+
+### Step 11b: plugin install (cc-company + superpowers) — ⚠️ owner manual step
 
 **重要**: `/plugin marketplace add` / `/plugin install` 等の slash command は Claude tool 呼び出しから発動できません (user 入力起点のみ)。Claude (あなた) は本 Step を直接実行できず、**owner に手動依頼**してください。
 
 settings.json には Step 3 で `extraKnownMarketplaces` + `enabledPlugins` を宣言済のため、**次回 Claude Code 起動時に auto resolve される可能性あり**。Auto resolve 成功時は本 Step 全 skip 可。
+
+**注意 (2026-05-27 demo-001 観察事例)**: superpowers は初回 `claude` 起動時に auto resolve されない case がある。**marketplace update + Claude Code 再起動を 1-2 回繰り返すと install 成功**することが確認されている (詳細トリガー不明、cache / metadata 同期の問題と推測)。2-3 回繰り返しても install されない場合は GitHub auth / network 設定を確認 (詳細: `docs/installation.md` の Step 11 補足 section)。
 
 Auto resolve しない / 確認したい case は、owner が新しい claude session で以下を順次手動実行:
 
@@ -191,14 +206,13 @@ Auto resolve しない / 確認したい case は、owner が新しい claude se
 /plugin marketplace add Shin-sibainu/cc-company
 /plugin marketplace add anthropics/claude-plugins-official
 /plugin install company@cc-company
-/plugin install git-workflow@cc-company
 /plugin install superpowers@claude-plugins-official
 /plugin list
 ```
 
-完了後、`/plugin list` で 3 plugin が enabled 状態であることを確認。
+完了後、`/plugin list` で 2 plugin (company + superpowers) が enabled 状態であることを確認。git-workflow は plugin ではなく direct skill (Step 11a で配置済) のため `/plugin list` には表示されない。
 
-Claude (あなた) の Step 11 完了報告は「owner に slash command 6 行を案内した」で OK。実 install は owner 側で完了する想定。
+Claude (あなた) の Step 11b 完了報告は「owner に slash command 5 行を案内した」で OK。実 install は owner 側で完了する想定。
 
 ### Step 12: 完了確認
 
@@ -218,6 +232,7 @@ test -f ~/.cc-client-memory/seed-baseline-security.md && \
 test -f ~/.cc-client-memory/seed-baseline-implementation-gate.md && \
 test -f ~/.cc-client-memory/seed-baseline-secretary-posture.md && \
 test -f ~/.cc-client-memory/seed-client-persona.md && \
+test -f ~/.claude/skills/git-workflow/SKILL.md && \
 test -d .git && \
 test -f CLAUDE.md && \
 test -f .gitignore && \
@@ -249,7 +264,7 @@ chat に以下を出力:
 - ~/.claude/{rules, CLAUDE.md, settings.json, hooks/} : 4 種 (rules 3 + CLAUDE.md 1 + settings.json 1 + hooks 4)
 - ~/.cc-client-memory/ : 4 seed file (3 baseline + 1 client persona = owner 領域実値 + Phase B marker)
 - {company-name}/ : .claude/settings.json + CLAUDE.md + .gitignore + .git/hooks/pre-commit + .company/secretary/
-- enabled plugin : 3 (company + git-workflow + superpowers)
+- enabled plugin : 2 (company + superpowers) + direct skill : 1 (git-workflow @ ~/.claude/skills/git-workflow/SKILL.md)
 
 【Phase A (owner hearing)】 ✅ 完了 (owner answer 済、Q-owner-1〜4 実値が seed-client-persona.md owner 領域に注入)
 
