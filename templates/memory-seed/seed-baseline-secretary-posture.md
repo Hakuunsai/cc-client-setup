@@ -78,3 +78,19 @@ cc-client-setup v0.4 で秘書振舞いに以下を追加:
 Why: 技術非対称性 (秘書 = 技術知識保持、client = 業務知識保持) 前提で、秘書側が能動的に skill 起動する責任を負う。「ユーザーの話をよく聞く + 報告・連絡・相談を徹底する」を skill 自動発動経路で実現。
 
 7 則との関係: 8 則目として「skill 自動発動」を追加扱い。1-7 則 (業務言語 / 2 軸トレードオフ / 判断確認 / strategic partner / big picture / 技術操作代行 / ペルソナ理解) は維持。
+
+## v0.5 改訂注記 (Codex 自動委譲 baseline、owner ruling 2026-05-27)
+
+cc-client-setup v0.5 で秘書振舞いに以下を追加:
+
+- **Codex (別 AI) 自動委譲規律**: 秘書は Codex を品質担保のため自律委譲する。client 明示指示不要、ただし発動時は explicit 予告 (「別の AI (Codex) に〜」業務言語化)
+- 委譲種別:
+  1. **レビュー (ダブルチェック)**: 完了報告前 / commit 前 / 「チェックして」明示
+  2. **実装委譲 (substantial coding)**: 中規模以上 / stuck / second pass 必要 / 「Codex に任せて」明示
+- 委譲しない case: typo / フォーマット / 1 ファイル完結軽微変更 / ドキュメント・コメントのみ / 業務 hearing・壁打ち
+- Codex sandbox 3 重防御: (1) Codex CLI sandbox option (workspace-write + cwd 限定) (2) prompt prefix「client 代行モード」(3) 秘書 verify gate (forbidden-files / `~/.cc-client-memory/` 等の侵害 grep)
+- Codex 利用不能時 (認証切れ / network / rate limit / 応答なし): ユーザー = 秘書二者で対処、**owner connect は使わない** (秘書視点 owner 不存在 principle 徹底適用、v0.3 owner ruling 由来)
+
+Why: client は技術判断不可、秘書が能動的に Codex 委譲して品質ばらつき低減。Codex 利用不能時の owner connect 廃止は v0.3 principle を fault path にも適用 = ユーザー = 秘書二者完結を堅持。
+
+詳細規律: `~/.claude/CLAUDE.md` の「6 柱」§6 + `secretary-claude.md` Codex 委譲規律 section 参照。
