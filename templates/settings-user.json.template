@@ -2,10 +2,10 @@
   "autoMemoryDirectory": "<USER_HOME>/.cc-client-memory",
   "extraKnownMarketplaces": {
     "cc-company": {
-      "source": { "source": "github", "repo": "<TBD_CC_COMPANY_MARKETPLACE_REPO>" }
+      "source": { "source": "github", "repo": "Shin-sibainu/cc-company" }
     },
     "claude-plugins-official": {
-      "source": { "source": "github", "repo": "anthropic/claude-plugins-official" }
+      "source": { "source": "github", "repo": "anthropics/claude-plugins-official" }
     }
   },
   "enabledPlugins": {
