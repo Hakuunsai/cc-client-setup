@@ -1,4 +1,4 @@
-# cc-client-setup v0.2 - Claude Code Self-Setup Prompt
+# cc-client-setup v0.5 - Claude Code Self-Setup Prompt (Codex 委譲統合)
 
 このプロンプトは Claude Code (あなた) が、クライアント PC に Claude Code 環境を
 自律でセットアップするための指示書です。owner ご了承前提、本指示書を実行することを承諾します。
@@ -25,7 +25,7 @@
 下記 Step 1-14 を上から順に冪等に実行してください。各 Step で対象 file が既に存在し内容一致なら skip、差分なら `*.bak.YYYYMMDDTHHmmss` に backup 後 overwrite してください。permission ask が出たら owner に確認してください (auto mode 中なら自動で acceptEdits)。
 
 - [ ] **Step 1**: `~/.claude/rules/` に 3 file 配置 (security-essentials.md / forbidden-files.md / network-security.md)
-- [ ] **Step 2**: `~/.claude/CLAUDE.md` 配置 (姿勢英文 + ペルソナ + 5 柱 + 自動記録規律)
+- [ ] **Step 2**: `~/.claude/CLAUDE.md` 配置 (姿勢英文 + ペルソナ + 6 柱 + 自動記録規律 + Codex 自動委譲規律、v0.5 拡張)
 - [ ] **Step 3**: `~/.claude/settings.json` 配置 (plugins + hooks 4 種 + permissions + `autoMemoryDirectory: "~/.cc-client-memory"`)
 - [ ] **Step 4**: `~/.claude/hooks/` に 4 hook script 配置 (inject-auto-company-skill.sh / memory-local-commit.sh / PreToolUse-DenyDangerous.ps1 / PostToolUse-AutoCheckpoint.ps1)
 - [ ] **Step 5**: `~/.cc-client-memory/` 配置 (mkdir + git init + 3 baseline seed copy + seed-client-persona.md (owner 領域実値 + Phase B marker 注入) + 初回 commit)
@@ -35,10 +35,12 @@
 - [ ] **Step 9**: cwd で git init (未 init なら) + `.git/hooks/pre-commit` (sh shim) + `.git/hooks/pre-commit.ps1` (本体) 配置 + 初回 commit
 - [ ] **Step 10**: `.company/secretary/` 配置 (cwd 相対、CLAUDE.md + 空 inbox/todos/notes、cc-company plugin 利用前提)
 - [ ] **Step 11a (Claude 自動)**: `~/.claude/skills/git-workflow/SKILL.md` 配置 (cc-company marketplace 経由 plugin 提供がないため direct skill 配置、v0.4 で経路追加)
-- [ ] **Step 11b (owner manual)**: plugin install (`/plugin marketplace add` + `/plugin install` × 2 = cc-company + superpowers)
-- [ ] **Step 12**: 完了確認 (各配置物 grep + 4 hook 存在 + plugin enabled state + `~/.cc-client-memory/seed-client-persona.md` 内 Phase B marker 存在)
+- [ ] **Step 11b (owner manual)**: plugin install (`/plugin marketplace add` + `/plugin install` × 3 = cc-company + superpowers + codex (v0.5 追加))
+- [ ] **Step 11.5 (Claude 自動、v0.5 追加)**: Codex 実体配備 (Node.js install + `@openai/codex` CLI install + 配備確認)
+- [ ] **Step 11.6 (owner manual、v0.5 追加)**: `codex login` OAuth flow 案内 (ブラウザ login)、`~/.codex/auth.json` 配備確認
+- [ ] **Step 12**: 完了確認 (各配置物 grep + 4 hook 存在 + plugin enabled state + `~/.cc-client-memory/seed-client-persona.md` 内 Phase B marker 存在 + Codex 実体配備 + `codex@openai-codex` plugin enabled、v0.5 拡張)
 - [ ] **Step 13**: cheatsheet 出力 (placeholder 置換版を chat に出力、owner が印刷 / PDF 化して client に渡す)
-- [ ] **Step 14**: Phase B (client hearing) の状況説明 (owner に「次の claude 再起動で client hearing が走る」と伝達)
+- [ ] **Step 14**: Phase B (client hearing) の状況説明 + v0.5 Codex 委譲統合説明 (owner に「次の claude 再起動で client hearing が走る」+「秘書が必要に応じて別の AI (Codex) にダブルチェック / 実装委譲を自動で行う」と伝達)
 
 ## 各 Step の具体 command
 
@@ -205,14 +207,70 @@ Auto resolve しない / 確認したい case は、owner が新しい claude se
 ```
 /plugin marketplace add Shin-sibainu/cc-company
 /plugin marketplace add anthropics/claude-plugins-official
+/plugin marketplace add openai/codex-plugin-cc
 /plugin install company@cc-company
 /plugin install superpowers@claude-plugins-official
+/plugin install codex@openai-codex
 /plugin list
 ```
 
-完了後、`/plugin list` で 2 plugin (company + superpowers) が enabled 状態であることを確認。git-workflow は plugin ではなく direct skill (Step 11a で配置済) のため `/plugin list` には表示されない。
+完了後、`/plugin list` で 3 plugin (company + superpowers + codex、v0.5 で codex 追加) が enabled 状態であることを確認。git-workflow は plugin ではなく direct skill (Step 11a で配置済) のため `/plugin list` には表示されない。
 
-Claude (あなた) の Step 11b 完了報告は「owner に slash command 5 行を案内した」で OK。実 install は owner 側で完了する想定。
+Claude (あなた) の Step 11b 完了報告は「owner に slash command 7 行を案内した」で OK。実 install は owner 側で完了する想定。
+
+### Step 11.5: Codex 実体配備 (Claude 自動、v0.5 追加)
+
+Codex CLI を Windows native に install します。Step 11b の plugin install (`codex@openai-codex`) と pair で動作 (plugin = Claude Code から `mcp__codex__codex` tool を呼ぶ経路、CLI = 実体実行 binary)。
+
+```bash
+# Node.js 既 install 確認 (skip 判定)
+if ! node --version >/dev/null 2>&1; then
+  # winget install (silent + 自動 accept)
+  winget install --id OpenJS.NodeJS.LTS --silent --accept-source-agreements --accept-package-agreements
+  echo "Note: PATH 反映に新 shell 起動が必要な場合あり"
+fi
+
+# Codex CLI install (既 install ならバージョン確認のみ)
+if ! codex --version >/dev/null 2>&1; then
+  npm install -g @openai/codex
+fi
+
+# 配備確認
+node --version && codex --version
+```
+
+**冪等性**: `codex --version` 反応すれば skip。`node` 不在で winget install fail した場合、新 shell で再試行 or owner manual install (`winget install OpenJS.NodeJS.LTS` を terminal で実行) を案内。
+
+**失敗時**: winget / npm fail は warning 出力 + Step 12 配備確認に degraded mode flag を立て、Codex なし運用継続 (= v0.4 機能は全動作する)。kit-prompt 完走自体は継続。
+
+(注: Node.js install 後の PATH 反映に新 shell 必要 case あり。失敗時は cheatsheet「Codex 利用不能」case 案内で運用、`docs/installation.md` Step 11.5 section 参照)
+
+### Step 11.6: `codex login` OAuth flow 案内 (owner manual、v0.5 追加)
+
+**重要**: `codex login` はブラウザ OAuth flow を起動する human-in-the-loop step、自動化不可。Claude (あなた) は本 Step を直接実行できず、**owner に手動依頼**してください。
+
+owner に以下を chat 出力で案内:
+
+```
+Codex CLI の認証を 1 度だけ手動で実施してください:
+
+1. terminal (PowerShell or Git Bash) で `codex login` 実行
+2. ブラウザが自動で開く (`https://chat.openai.com/...` の OAuth login 画面)
+3. ChatGPT アカウント (Plus / Pro / Enterprise) で login
+4. ブラウザに「Authentication successful」表示 + terminal close
+5. 配備確認: PowerShell で `Test-Path $HOME\.codex\auth.json` (true なら OK)、Bash で `[ -f ~/.codex/auth.json ] && echo "OK"`
+
+login 完了後、本 kit-prompt 実行を再開してください (秘書に「Codex login 完了しました」と伝達)。
+
+login が失敗する場合:
+- ChatGPT アカウント未保有 → ChatGPT Plus 加入が必要 (`https://chat.openai.com/`)
+- ブラウザが開かない → terminal 出力の URL を手動で browser に paste
+- network 制限環境 → owner の VPN / network 設定確認
+```
+
+**配備確認**: owner が「login 完了」と伝達した後、Claude (あなた) は `[ -f ~/.codex/auth.json ]` を確認。true なら次の Step に進む、false なら Step 12 配備確認に未完了 flag を立てるが kit-prompt 自体は完走継続 (= 次回 login 完了時から Codex 利用有効化)。
+
+(注: login OAuth flow は human-in-the-loop で自動化不可、唯一 owner manual step。Step 11b plugin install と同じ「owner 手動」カテゴリだが、こちらは settings.json declarative ではなく事前 OAuth が必要なため)
 
 ### Step 12: 完了確認
 
@@ -243,9 +301,17 @@ echo "全配置物 OK"
 
 # Phase B marker 存在確認
 grep -q "<<<CLIENT_HEARING_PENDING>>>" ~/.cc-client-memory/seed-client-persona.md && echo "Phase B marker OK"
+
+# Codex 配備確認 (v0.5 追加、失敗時は degraded mode flag のみ、kit-prompt 完走継続)
+echo "--- Codex 配備確認 (v0.5) ---"
+node --version >/dev/null 2>&1 && echo "Node.js OK" || echo "Node.js NG (degraded mode)"
+codex --version >/dev/null 2>&1 && echo "Codex CLI OK" || echo "Codex CLI NG (degraded mode)"
+[ -f ~/.codex/auth.json ] && echo "codex login OK" || echo "codex login 未完了 (Step 11.6 owner manual を再実行案内)"
+grep -q "codex@openai-codex" ~/.claude/settings.json && echo "Codex plugin enabled state OK" || echo "Codex plugin enabled state NG"
+test -f templates/codex-prompts/client-delegation-prefix.md && echo "Codex prompt prefix template OK" || echo "Codex prompt prefix template NG (kit 同梱漏れ?)"
 ```
 
-両方 OK が表示されること。
+両方 (基本 + Codex 配備) OK が表示されること。Codex 関連 NG は degraded mode で運用継続 (= v0.4 機能は全動作、Codex 委譲のみ無効、cheatsheet 「Codex 利用不能」case 案内継承)。
 
 ### Step 13: cheatsheet 出力 (chat に)
 
