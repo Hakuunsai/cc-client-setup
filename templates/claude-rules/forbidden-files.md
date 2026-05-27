@@ -8,6 +8,9 @@
 **機密情報**: `secrets.json`, `secrets.*.json`, `*.secret`, `*.secrets`, `.env`, `.env.*`
 **認証・鍵**: `*.pem`, `*.key`, `*.pfx`, `*.p12`, `.ssh/**`, `id_rsa*`, `.aws/**`, `.azure/**`, `credentials`, `service-account*.json`
 **名前に含む**: `password`, `token`, `credential`, `secret`, `apikey`, `api_key`, `api-key`（.md は除く）
+**Codex 関連** (v0.5 追加): `~/.codex/auth.json`, `~/.codex/sessions/*`, `~/.codex/auth.*`
+
+※ Codex 認証情報は Codex CLI 自身が管理。秘書も Codex も触らない (3 重防御の層 3)。
 
 ## 許可される操作
 
