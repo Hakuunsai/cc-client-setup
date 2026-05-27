@@ -70,6 +70,47 @@ claude
 
 `superpowers` plugin が install 成功すると、秘書が `brainstorming` / `writing-plans` / `systematic-debugging` / `verification-before-completion` / `receiving-code-review` 等の skill を自律発動する (client は明示指定不要、v0.4 で principle 確立)。install 不成功状態でも `company` plugin の secretary 基本振舞いは動作するため、業務影響は限定的だが、新規依頼の brainstorming / 計画立案の質が低下する。
 
+## Step 11.5 / 11.6 (v0.5 新規): Codex 実体配備 + OAuth login
+
+### Step 11.5 (Codex CLI install) が失敗する場合
+
+- **Node.js install fail (winget)**:
+  - owner manual で `winget install OpenJS.NodeJS.LTS` を terminal で実行、または公式 installer (`https://nodejs.org/`) で install
+  - 新 terminal を開いて PATH 反映確認 (`node --version` 反応すれば OK)
+- **`npm install -g @openai/codex` fail**:
+  - owner manual で `npm install -g @openai/codex` を terminal (新 shell 推奨) で実行
+  - permission error の場合 PowerShell を「管理者として実行」で再試行
+  - それでも fail の場合は degraded mode で運用継続 (= v0.4 機能は全動作、Codex 委譲のみ無効)
+
+### Step 11.6 (owner manual `codex login`)
+
+1. terminal (PowerShell or Git Bash) で `codex login` 実行
+2. ブラウザが自動で開く (`https://chat.openai.com/...`)
+3. ChatGPT アカウント (Plus / Pro / Enterprise) で login
+4. ブラウザに「Authentication successful」表示 + terminal close
+5. 配備確認: `Test-Path $HOME\.codex\auth.json` (PowerShell) or `ls ~/.codex/auth.json` (Bash) で存在確認
+
+**login が失敗する場合**:
+- ChatGPT アカウントを保持していない場合 → ChatGPT Plus 加入が必要 (`https://chat.openai.com/`)
+- ブラウザが開かない → terminal 出力の URL を手動で browser に paste
+- network 制限環境 → owner の VPN / network 設定確認
+
+**login 後の運用**:
+- 認証 token は `~/.codex/auth.json` に cache、自動 refresh
+- 期限切れ時は秘書が「`codex login` を再実行してください」と業務言語で案内 (cheatsheet「困ったとき」case 経由)
+- token 流出回避: `~/.codex/auth.json` は forbidden-files で保護済、秘書も Codex も触らない
+
+### 補足 (秘書側挙動)
+
+Codex CLI + `codex@openai-codex` plugin が install 成功すると、秘書が以下を自動発動:
+
+- **Codex review (mcp__codex__codex 経由)**: コード変更を伴う完了報告の直前 / git commit 指示時 / 「レビューして」明示 → 「別の AI (Codex) にダブルチェックさせます」予告 + 委譲
+- **Codex 実装委譲 (mcp__codex__codex 経由)**: 中規模以上の実装 task / stuck / second pass 必要 / 「Codex に任せて」明示 → 「別の AI (Codex) に始めから書いてもらいます」予告 + client 了承後に委譲
+
+詳細規律: `~/.claude/CLAUDE.md` 「6 柱」§6 + `templates/secretary-claude.md.template` Codex 委譲規律 section 参照。
+
+Codex 利用不能時 (認証切れ / network / rate limit / 応答なし) はユーザー = 秘書二者で対処、owner connect は使わない (秘書視点 owner 不存在 principle 徹底適用、v0.3 owner ruling 由来)。
+
 ## トラブルシュート
 
 詳細は `docs/recovery.md` 参照。
