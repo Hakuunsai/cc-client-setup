@@ -1,4 +1,27 @@
-# cc-client-setup backlog (v0.4.0)
+# cc-client-setup backlog (v0.5.0)
+
+## v0.5.0 Codex 委譲統合 sprint 完走 (2026-05-27)
+
+v0.4.0 release 後の Codex 委譲統合 (= 別 AI 自動委譲 + sandbox 規律) を 1 sprint で実装、v0.5.0 release (minor bump)。owner ruling 2026-05-27 由来。
+
+| Layer | 内容 |
+|---|---|
+| Layer 1 (実体 install) | kit-prompt.md Step 11.5 (Node.js + Codex CLI install) + Step 11.6 (owner manual `codex login` OAuth flow 案内) + Step 11b に `codex@openai-codex` plugin install 追加 + Step 12 配備確認に Codex verify list 追加 |
+| Layer 2 (規律 templates) | claude-md-user.template 5 柱 → 6 柱化 (第 6 柱 = Codex 自動委譲規律) + secretary-claude.md.template に Codex 委譲規律 section 追加 (skill 自動発動 table 拡張 + 業務言語化規律 + verify gate + 利用不能 規律) + client-cheatsheet.md.template「困ったとき」table に Codex unavailable 3 case 追加 + seed-baseline-secretary-posture.md に Codex 自動委譲 baseline 追記 |
+| Layer 3 (sandbox 安全装置) | settings-user.json.template `enabledPlugins` + `extraKnownMarketplaces` に `openai-codex` 追加 + permissions deny に `Bash(codex *)` 追加 + forbidden-files.md に `~/.codex/auth.json` 等追加 + Codex prompt prefix template (`templates/codex-prompts/client-delegation-prefix.md`) 新規作成 |
+
+demo-001 verify (2026-05-27 release 後、owner 手動 5 件、別日):
+1. Codex 実体配備 verify (`node --version` / `codex --version` / `~/.codex/auth.json` 存在)
+2. Codex review 自動発動 verify
+3. Codex 実装委譲 自動発動 verify
+4. Sandbox 規律 verify (forbidden パス侵害検出)
+5. Codex unavailable fallback verify (ユーザー = 秘書二者で完結、owner connect 経路不使用)
+
+sprint contract: [office-tada `.company/projects/cc-client-setup/backlogs/2026-05-27-v0.5-codex-delegation-sprint-contract.md`](https://github.com/Hakuunsai/office-tada-secretary)。
+
+spec source of truth: [office-tada `docs/superpowers/specs/2026-05-27-cc-client-setup-v0.5-codex-delegation-design.md`](https://github.com/Hakuunsai/office-tada-secretary)。
+
+implementation plan: [office-tada `docs/superpowers/plans/2026-05-27-cc-client-setup-v0.5-codex-delegation.md`](https://github.com/Hakuunsai/office-tada-secretary) (12 Task)。
 
 ## v0.4.0 Phase 2.x sprint 完走 (2026-05-27)
 
