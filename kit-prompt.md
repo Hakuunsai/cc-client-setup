@@ -29,11 +29,11 @@
 - [ ] **Step 3**: `~/.claude/settings.json` 配置 (plugins + hooks 4 種 + permissions + `autoMemoryDirectory: "~/.cc-client-memory"`)
 - [ ] **Step 4**: `~/.claude/hooks/` に 4 hook script 配置 (inject-auto-company-skill.sh / memory-local-commit.sh / PreToolUse-DenyDangerous.ps1 / PostToolUse-AutoCheckpoint.ps1)
 - [ ] **Step 5**: `~/.cc-client-memory/` 配置 (mkdir + git init + 3 baseline seed copy + seed-client-persona.md (owner 領域実値 + Phase B marker 注入) + 初回 commit)
-- [ ] **Step 6**: `{company-name}/.claude/settings.json` 配置 (空テンプレ、user-wide override 用)
-- [ ] **Step 7**: `{company-name}/CLAUDE.md` 配置 (姿勢英文 + ペルソナ + PJ 別 owner contact 方針 + 業務概要 marker)
-- [ ] **Step 8**: `{company-name}/.gitignore` 配置 (generic Windows + 言語中立)
-- [ ] **Step 9**: `{company-name}/` git init (未 init なら) + `.git/hooks/pre-commit` 配置 + 初回 commit
-- [ ] **Step 10**: `{company-name}/.company/secretary/` 配置 (CLAUDE.md + 空 inbox/todos/notes、cc-company plugin 利用前提)
+- [ ] **Step 6**: `.claude/settings.json` 配置 (cwd 相対、空テンプレ、user-wide override 用)
+- [ ] **Step 7**: `CLAUDE.md` 配置 (cwd 相対、姿勢英文 + ペルソナ + PJ 別 owner contact 方針 + 業務概要 marker)
+- [ ] **Step 8**: `.gitignore` 配置 (cwd 相対、generic Windows + 言語中立)
+- [ ] **Step 9**: cwd で git init (未 init なら) + `.git/hooks/pre-commit` (sh shim) + `.git/hooks/pre-commit.ps1` (本体) 配置 + 初回 commit
+- [ ] **Step 10**: `.company/secretary/` 配置 (cwd 相対、CLAUDE.md + 空 inbox/todos/notes、cc-company plugin 利用前提)
 - [ ] **Step 11**: plugin install (`/plugin marketplace add` + `/plugin install` × 3 = cc-company + git-workflow + superpowers)
 - [ ] **Step 12**: 完了確認 (各配置物 grep + 4 hook 存在 + plugin enabled state + `~/.cc-client-memory/seed-client-persona.md` 内 Phase B marker 存在)
 - [ ] **Step 13**: cheatsheet 出力 (placeholder 置換版を chat に出力、owner が印刷 / PDF 化して client に渡す)
@@ -109,72 +109,97 @@ git add -A
 git commit -m "Initial seed (owner Phase A complete, client Phase B pending)"
 ```
 
-### Step 6: `{company-name}/.claude/settings.json` 配置
+### Step 6: `.claude/settings.json` 配置 (cwd 相対)
+
+(本セッション cwd = `C:\Users\{user}\source\{company-name}\` 想定、以下 Step 6-10/12 の全 path は cwd 相対で記述。`{company-name}/` 前置は付けないこと。付けると `…\source\{company-name}\{company-name}\.claude\` の二重 path になる)
 
 ```bash
-mkdir -p {company-name}/.claude
+mkdir -p .claude
 ```
 
-WebFetch `{kit raw URL prefix}/templates/settings-project.json.template` → Write `{company-name}/.claude/settings.json`。空テンプレ (user-wide override 用)。
+WebFetch `{kit raw URL prefix}/templates/settings-project.json.template` → Write `.claude/settings.json`。空テンプレ (user-wide override 用)。
 
-### Step 7: `{company-name}/CLAUDE.md` 配置
+### Step 7: `CLAUDE.md` 配置 (cwd 相対)
 
 WebFetch `{kit raw URL prefix}/templates/claude-md-project.template` → 取得した template の placeholder 置換:
 - `{COMPANY_NAME}` を実値置換
 - `{OWNER_CONTACT_POLICY}` を Q-owner-5 結果 ((a)/(b)) で置換
-→ Write `{company-name}/CLAUDE.md`
+→ Write `CLAUDE.md` (cwd 直下)
 
-### Step 8: `{company-name}/.gitignore` 配置
+### Step 8: `.gitignore` 配置 (cwd 相対)
 
-WebFetch `{kit raw URL prefix}/templates/gitignore.template` → Write `{company-name}/.gitignore`
+WebFetch `{kit raw URL prefix}/templates/gitignore.template` → Write `.gitignore`
 
-### Step 9: `{company-name}/` git init + pre-commit 配置
+### Step 9: git init + pre-commit 配置 (2-file layout: sh shim + ps1 本体)
 
 ```bash
-cd {company-name}
 [ ! -d .git ] && git init -b main
 mkdir -p .git/hooks
 ```
 
-WebFetch `{kit raw URL prefix}/templates/pre-commit.ps1.template` → Write `{company-name}/.git/hooks/pre-commit`
+**pre-commit.ps1 (PowerShell 本体)** を WebFetch + Write:
+- WebFetch `{kit raw URL prefix}/templates/pre-commit.ps1.template` → Write `.git/hooks/pre-commit.ps1`
+
+**pre-commit (sh shim)** を Write で配置 (Git for Windows の git は sh shim を最初に実行、shim から pwsh.exe に委譲):
+
+```sh
+#!/bin/sh
+# sh shim — exec pwsh.exe で PowerShell 本体に委譲 (Git for Windows 環境前提)
+exec pwsh.exe -File "$(dirname "$0")/pre-commit.ps1"
+```
+
+(本 sh shim は file 名 `.git/hooks/pre-commit`、改行 LF、shebang `#!/bin/sh` で Write)
 
 ```bash
-cd {company-name}
+chmod +x .git/hooks/pre-commit
 git add .claude/ CLAUDE.md .gitignore
 git commit -m "Initial setup ({company-name} workspace)"
 ```
 
-### Step 10: `{company-name}/.company/secretary/` 配置
+(注: kit-prompt v0.2 で「pre-commit に直接 ps1 内容書き」と指示していたが、sh は ps1 を直接実行できないため commit が落ちる。v0.2.1 で 2-file layout に修正。pre-commit.ps1.template の self-description と整合。F-2 fix 2026-05-27)
+
+### Step 10: `.company/secretary/` 配置 (cwd 相対)
 
 ```bash
-mkdir -p {company-name}/.company/secretary/{inbox,todos,notes}
+mkdir -p .company/secretary/inbox
+mkdir -p .company/secretary/todos
+mkdir -p .company/secretary/notes
 ```
 
-WebFetch `{kit raw URL prefix}/templates/secretary-claude.md.template` → Write `{company-name}/.company/secretary/CLAUDE.md`
+WebFetch `{kit raw URL prefix}/templates/secretary-claude.md.template` → Write `.company/secretary/CLAUDE.md`
 
 `.gitkeep` 配置:
 ```bash
-touch {company-name}/.company/secretary/inbox/.gitkeep
-touch {company-name}/.company/secretary/todos/.gitkeep
-touch {company-name}/.company/secretary/notes/.gitkeep
+touch .company/secretary/inbox/.gitkeep
+touch .company/secretary/todos/.gitkeep
+touch .company/secretary/notes/.gitkeep
 ```
 
 ```bash
-cd {company-name}
 git add .company/
 git commit -m "Add secretary dir (cc-company integration)"
 ```
 
-### Step 11: plugin install (cc-company + git-workflow + superpowers)
+### Step 11: plugin install (cc-company + git-workflow + superpowers) — ⚠️ owner manual step
 
-Claude Code 内で:
-1. `/plugin marketplace add cc-company` (詳細 source は `~/.claude/settings.json` の `extraKnownMarketplaces` 経由で自動取得)
-2. `/plugin marketplace add claude-plugins-official`
-3. `/plugin install company@cc-company`
-4. `/plugin install git-workflow@cc-company`
-5. `/plugin install superpowers@claude-plugins-official`
+**重要**: `/plugin marketplace add` / `/plugin install` 等の slash command は Claude tool 呼び出しから発動できません (user 入力起点のみ)。Claude (あなた) は本 Step を直接実行できず、**owner に手動依頼**してください。
+
+settings.json には Step 3 で `extraKnownMarketplaces` + `enabledPlugins` を宣言済のため、**次回 Claude Code 起動時に auto resolve される可能性あり**。Auto resolve 成功時は本 Step 全 skip 可。
+
+Auto resolve しない / 確認したい case は、owner が新しい claude session で以下を順次手動実行:
+
+```
+/plugin marketplace add Shin-sibainu/cc-company
+/plugin marketplace add anthropics/claude-plugins-official
+/plugin install company@cc-company
+/plugin install git-workflow@cc-company
+/plugin install superpowers@claude-plugins-official
+/plugin list
+```
 
 完了後、`/plugin list` で 3 plugin が enabled 状態であることを確認。
+
+Claude (あなた) の Step 11 完了報告は「owner に slash command 6 行を案内した」で OK。実 install は owner 側で完了する想定。
 
 ### Step 12: 完了確認
 
@@ -194,11 +219,12 @@ test -f ~/.cc-client-memory/seed-baseline-security.md && \
 test -f ~/.cc-client-memory/seed-baseline-implementation-gate.md && \
 test -f ~/.cc-client-memory/seed-baseline-secretary-posture.md && \
 test -f ~/.cc-client-memory/seed-client-persona.md && \
-test -d {company-name}/.git && \
-test -f {company-name}/CLAUDE.md && \
-test -f {company-name}/.gitignore && \
-test -f {company-name}/.git/hooks/pre-commit && \
-test -d {company-name}/.company/secretary && \
+test -d .git && \
+test -f CLAUDE.md && \
+test -f .gitignore && \
+test -f .git/hooks/pre-commit && \
+test -f .git/hooks/pre-commit.ps1 && \
+test -d .company/secretary && \
 echo "全配置物 OK"
 
 # Phase B marker 存在確認
