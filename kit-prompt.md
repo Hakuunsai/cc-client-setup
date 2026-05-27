@@ -16,7 +16,7 @@
 
 - `{COMPANY_NAME}` = クライアント企業名 (例: 「株式会社サンプル」)
 - `{OWNER_CONTACT}` = cheatsheet 用 owner 連絡先 (例: 「email: owner@example.com / 受付時間: 平日 9:00-18:00」)
-- `{CLIENT_OWNER_SEED_BLOCK}` = owner hearing 結果 (Q-owner-1〜5 全 5 件)、`seed-client-persona.md` owner 領域に注入される markdown block (約 5-10 行)
+- `{CLIENT_OWNER_SEED_BLOCK}` = owner hearing 結果 (Q-owner-1〜4 全 4 件)、`seed-client-persona.md` owner 領域に注入される markdown block (約 4-8 行)
 
 ※ client 業務情報 (業務概要 / 業務範囲 / 業界 common sense) は Phase B (client PC 秘書) で client 本人が答えるため、本 kit-prompt 内には含めない (marker placeholder で wait)。
 
@@ -30,7 +30,7 @@
 - [ ] **Step 4**: `~/.claude/hooks/` に 4 hook script 配置 (inject-auto-company-skill.sh / memory-local-commit.sh / PreToolUse-DenyDangerous.ps1 / PostToolUse-AutoCheckpoint.ps1)
 - [ ] **Step 5**: `~/.cc-client-memory/` 配置 (mkdir + git init + 3 baseline seed copy + seed-client-persona.md (owner 領域実値 + Phase B marker 注入) + 初回 commit)
 - [ ] **Step 6**: `.claude/settings.json` 配置 (cwd 相対、空テンプレ、user-wide override 用)
-- [ ] **Step 7**: `CLAUDE.md` 配置 (cwd 相対、姿勢英文 + ペルソナ + PJ 別 owner contact 方針 + 業務概要 marker)
+- [ ] **Step 7**: `CLAUDE.md` 配置 (cwd 相対、姿勢英文 + ペルソナ + 業務概要 marker)
 - [ ] **Step 8**: `.gitignore` 配置 (cwd 相対、generic Windows + 言語中立)
 - [ ] **Step 9**: cwd で git init (未 init なら) + `.git/hooks/pre-commit` (sh shim) + `.git/hooks/pre-commit.ps1` (本体) 配置 + 初回 commit
 - [ ] **Step 10**: `.company/secretary/` 配置 (cwd 相対、CLAUDE.md + 空 inbox/todos/notes、cc-company plugin 利用前提)
@@ -101,7 +101,7 @@ baseline 3 file (kit raw URL prefix `/templates/memory-seed/` 配下):
 - WebFetch `seed-baseline-secretary-posture.md` → 同上
 
 client persona:
-- WebFetch `seed-client-persona.md.template` → 取得した template の Phase A placeholder (例: `<<<COMPANY_NAME>>>`、`<<<CLIENT_OWNER_PROFILE>>>`、`<<<LEGACY_SYSTEM>>>` 等) を `{CLIENT_OWNER_SEED_BLOCK}` の実値で置換 → Phase B 領域は marker `<<<CLIENT_HEARING_PENDING>>>` のまま保持 → Write `~/.cc-client-memory/seed-client-persona.md`
+- WebFetch `seed-client-persona.md.template` → 取得した template の Phase A placeholder (`<<<COMPANY_NAME>>>` / `<<<MAIN_CONTACT>>>` / `<<<LEGACY_SYSTEM>>>` / `<<<OWNER_CONTACT>>>` の 4 件、+ frontmatter の `<<<PHASE_A_COMPLETED_AT>>>`) を `{CLIENT_OWNER_SEED_BLOCK}` の実値で置換 → Phase B 領域は marker `<<<CLIENT_HEARING_PENDING>>>` のまま保持 → Write `~/.cc-client-memory/seed-client-persona.md`
 
 ```bash
 cd ~/.cc-client-memory
@@ -123,7 +123,6 @@ WebFetch `{kit raw URL prefix}/templates/settings-project.json.template` → Wri
 
 WebFetch `{kit raw URL prefix}/templates/claude-md-project.template` → 取得した template の placeholder 置換:
 - `{COMPANY_NAME}` を実値置換
-- `{OWNER_CONTACT_POLICY}` を Q-owner-5 結果 ((a)/(b)) で置換
 → Write `CLAUDE.md` (cwd 直下)
 
 ### Step 8: `.gitignore` 配置 (cwd 相対)
@@ -252,7 +251,7 @@ chat に以下を出力:
 - {company-name}/ : .claude/settings.json + CLAUDE.md + .gitignore + .git/hooks/pre-commit + .company/secretary/
 - enabled plugin : 3 (company + git-workflow + superpowers)
 
-【Phase A (owner hearing)】 ✅ 完了 (owner answer 済、Q-owner-1〜5 実値が seed-client-persona.md owner 領域に注入)
+【Phase A (owner hearing)】 ✅ 完了 (owner answer 済、Q-owner-1〜4 実値が seed-client-persona.md owner 領域に注入)
 
 【Phase B (client hearing)】 ⏳ pending (marker `<<<CLIENT_HEARING_PENDING>>>` で wait)
 
