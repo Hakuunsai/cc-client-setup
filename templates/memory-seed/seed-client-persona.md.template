@@ -1,0 +1,37 @@
+---
+name: client-persona-{client-id}
+description: クライアント別 persona file (Phase A owner 領域 + Phase B client 領域、cc-client-setup v0.2 spec Section 5.1.3 由来)
+metadata:
+  type: user
+  source: cc-client-setup v0.2 owner Phase A hearing + client Phase B hearing
+phase_a_completed: true
+phase_b_completed: false
+phase_a_completed_at: "<<<PHASE_A_COMPLETED_AT>>>"   # office-tada 秘書が hearing 完了時 iso8601 で埋める
+phase_b_completed_at: null
+---
+
+# クライアントペルソナ — <<<COMPANY_NAME>>>
+
+## owner 領域 (Phase A、office-tada 秘書 hearing 結果)
+
+- **企業名**: <<<COMPANY_NAME>>>
+- **主要担当者**: <<<MAIN_CONTACT>>>     <!-- Q-owner-2 結果、例: 「山田太郎 / 営業部長 / yamada@example.com」 -->
+- **現在のレガシーシステム概要**: <<<LEGACY_SYSTEM>>>   <!-- Q-owner-3 結果、例: 「Excel ファイル管理 + 紙台帳 + 既存パッケージ X、ベンダー Y」 -->
+- **owner 連絡先**: <<<OWNER_CONTACT>>>   <!-- Q-owner-4 結果、例: 「email: owner@example.com / 受付時間: 平日 9:00-18:00」 -->
+- **owner contact 方針**: <<<OWNER_CONTACT_POLICY>>>   <!-- Q-owner-5 結果、(a) 完全代行 default / (b) ユーザー自己解決推奨 -->
+
+## client 領域 (Phase B、client PC 秘書 hearing 結果)
+
+<<<CLIENT_HEARING_PENDING>>>
+
+<!--
+本 section は client PC 秘書が初回起動時に AskUserQuestion で Q-client-1〜3 を主導、
+回答を以下のフォーマットで本 section に追記して上記 marker を置換する:
+
+- **業務概要**: {Q-client-1 結果、1-2 段落}
+- **業務範囲**: {Q-client-2 結果、複数選択}
+- **業界 common sense / 業界用語 / 注意事項**: {Q-client-3 結果、free text}
+
+完了後、frontmatter の `phase_b_completed: false` を `true` に、`phase_b_completed_at: null` を iso8601 timestamp に update。
+詳細は cc-client-setup v0.2 spec Section 5.1.2 + hearing-sop-client.md 参照。
+-->
