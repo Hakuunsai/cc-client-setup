@@ -38,6 +38,38 @@ owner が kit (`Hakuunsai/cc-client-setup`) を改訂した case、client PC に
 
 `seed-client-persona.md` の client 領域 (Phase B 結果) は保護対象、update で overwrite されません。
 
+## Step 11 plugin install 不成功時 (superpowers fallback、v0.4 で追加)
+
+kit-prompt Step 11b で `superpowers` plugin を install する際、初回 `claude` 起動時の auto resolve で install されない case がある (詳細トリガー不明、cache / metadata 同期の問題と推測)。**2026-05-27 demo-001 観察事例**: marketplace update + Claude Code 再起動を 1-2 回繰り返すと install 成功。
+
+### 初回 install fail 時の fallback 手順
+
+owner が client PC で以下を順次手動実行:
+
+```
+# 1. marketplace を最新化 (Claude Code 内で)
+/plugin marketplace update
+
+# 2. claude を一旦終了 (Ctrl+C → Enter)、再起動
+exit
+claude
+
+# 3. install 状態確認
+/plugin list
+```
+
+`superpowers@claude-plugins-official` が `enabled` で表示されれば成功。表示されない場合は再度 `/plugin marketplace update` + claude 再起動を 1 回繰り返す (2-3 回が目安)。
+
+### それでも install されない場合
+
+- **network 確認**: `git clone https://github.com/anthropics/claude-plugins-official.git /tmp/test-clone` を Git Bash で実行、network / proxy 問題切り分け
+- **GitHub auth 確認**: claude-plugins-official は public repo、通常 auth 不要だが、企業 PC で network 制限があるなら owner の判断で proxy / certificate 設定
+- **owner に相談**: cheatsheet「困ったとき」table 経由で owner 連絡
+
+### 補足 (秘書側挙動)
+
+`superpowers` plugin が install 成功すると、秘書が `brainstorming` / `writing-plans` / `systematic-debugging` / `verification-before-completion` / `receiving-code-review` 等の skill を自律発動する (client は明示指定不要、v0.4 で principle 確立)。install 不成功状態でも `company` plugin の secretary 基本振舞いは動作するため、業務影響は限定的だが、新規依頼の brainstorming / 計画立案の質が低下する。
+
 ## トラブルシュート
 
 詳細は `docs/recovery.md` 参照。
