@@ -1,4 +1,21 @@
-# cc-client-setup backlog (v0.2)
+# cc-client-setup backlog (v0.4.0)
+
+## v0.4.0 Phase 2.x sprint 完走 (2026-05-27)
+
+v0.3.0 release 後の demo-001 verify 由来 4 件を 1 sprint で集中処理、v0.4.0 release。
+
+| Task | 内容 | commit |
+|---|---|---|
+| 2.x-2 (F-5) | git-workflow direct skill 同梱 (templates/claude-skills/git-workflow/ 経路追加、kit-prompt Step 11 を 11a + 11b に分割、settings template から git-workflow@cc-company 削除) | bf1f6e2 |
+| 2.x-1 (F-6) | superpowers install 経路 audit + 再発防止策 (kit-prompt Step 11b に marketplace update + restart 1-2 回 fallback 案内、docs/installation.md に補足 section 追加) | 9e4578c |
+| 2.x-4 (秘書 principle) | 秘書 superpowers / git-workflow skill 自動発動規律 (secretary-claude.md.template + seed-baseline-secretary-posture.md を 8 則化、cheatsheet template + kit-prompt Step 14 status に反映、owner ruling 2026-05-27 由来) | 71ccbb3 |
+| 2.x-3 (spec cleanup) | spec v0.4-draft → v0.5-approved bump (Section 5.4.4 owner connect 書換、Section 8.3 7 則 → 8 則化、改訂履歴 v0.5-approved entry 追加) | office-tada side (別 repo) |
+
+demo-001 verify status (2026-05-27 owner 報告):
+- superpowers 主要 skill (`brainstorming` / `writing-plans` / `using-superpowers`) 発動 ✅
+- git-workflow direct skill 配置後の発動 verify は v0.4.0 release 後 owner 手動
+
+sprint contract: [office-tada `.company/projects/cc-client-setup/backlogs/2026-05-27-phase-2-x-sprint-contract.md` (v1.3-amended)](https://github.com/Hakuunsai/office-tada-secretary)。
 
 ## Phase 1 backlog の v0.2 での扱い
 
