@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# pre-commit hook for cc-client-setup target project (Linux variant).
+# 配置: .git/hooks/pre-commit (単一 bash ファイル、chmod +x)。
+# staged file を secret regex で grep、hit で exit 1。--no-verify で bypass 可。
+
+set +e
+
+staged="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null)"
+[ -z "$staged" ] && exit 0
+
+names=(
+  "AWS Access Key"
+  "Private Key"
+  "Generic password assignment"
+  "GitHub token"
+  "Slack token"
+)
+regexes=(
+  "AKIA[0-9A-Z]{16}"
+  "-----BEGIN ((RSA|EC|DSA|OPENSSH) )?PRIVATE KEY-----"
+  "password[[:space:]]*=[[:space:]]*[\"'][^\"'[:space:]]{8,}[\"']"
+  "ghp_[A-Za-z0-9]{36}"
+  "xox[abposr]-[A-Za-z0-9-]{10,}"
+)
+
+hits=()
+while IFS= read -r file; do
+  [ -f "$file" ] || continue
+  for i in "${!regexes[@]}"; do
+    if grep -Eiq "${regexes[$i]}" "$file" 2>/dev/null; then
+      hits+=("$file : ${names[$i]}")
+    fi
+  done
+done <<< "$staged"
+
+if [ "${#hits[@]}" -gt 0 ]; then
+  echo "pre-commit: 機密情報の疑いを検出しました。staged file を見直してください。" >&2
+  for h in "${hits[@]}"; do echo "  - $h" >&2; done
+  echo "" >&2
+  echo "false positive の場合、git commit --no-verify で bypass 可能 (慎重に)。" >&2
+  exit 1
+fi
+
+exit 0
