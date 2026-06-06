@@ -85,6 +85,25 @@ setup
 check "missing file exits 1" $? 1
 teardown
 
+# Case 6: case-insensitive secret 検出（Password= 大文字P → 修正3 を lock）
+setup
+write_msg pw.md metadata 'Password="supersecret123"'
+"$SCRIPT" "$CC_COMMS_DIR/outbox/pw.md" >/dev/null 2>&1
+check "case-insensitive secret refused exits 1" $? 1
+teardown
+
+# Case 7: inbox に stray ファイルがあっても msg_file のみコミット・bare に inbox/junk.md が含まれない（修正1 を lock）
+setup
+write_msg clean.md metadata "kit version check, no secrets here"
+echo "stray" > "$CC_COMMS_DIR/inbox/junk.md"   # 未コミットの stray ファイル
+"$SCRIPT" "$CC_COMMS_DIR/outbox/clean.md" >/dev/null 2>&1
+check "inbox stray: send exits 0" $? 0
+# bare から HEAD の tree を確認して inbox/junk.md が含まれていないこと
+# git -C で bare を操作すると safe.bareRepository=explicit で失敗するため --git-dir を使う
+junk_in_bare=$(git --git-dir="$bare" ls-tree -r --name-only HEAD 2>/dev/null | grep -c "inbox/junk.md" || true)
+check "inbox/junk.md not pushed to bare" "$junk_in_bare" 0
+teardown
+
 echo "---"
 [ "$fail" -eq 0 ] && echo "ALL PASS" || echo "SOME FAILED"
 exit $fail

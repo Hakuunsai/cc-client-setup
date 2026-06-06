@@ -20,6 +20,7 @@ command -v git  >/dev/null 2>&1 || { err "git 不在 (fail-closed: 送信中止)
 [ -d "$CC_COMMS_DIR/.git" ] || { err "comms repo 未初期化: $CC_COMMS_DIR (fail-closed)"; exit 1; }
 
 # --- kind 取得（frontmatter の kind:）---
+# frontmatter に kind 行が複数あれば先頭を採用
 kind="$(grep -m1 -E '^kind:[[:space:]]*' "$msg_file" 2>/dev/null | sed -E 's/^kind:[[:space:]]*//' | tr -d '[:space:]')"
 case "$kind" in
   metadata|business) ;;
@@ -36,15 +37,18 @@ secret_regexes=(
   "xox[abposr]-[A-Za-z0-9-]{10,}"
 )
 for re in "${secret_regexes[@]}"; do
-  if grep -Eq "$re" "$msg_file" 2>/dev/null; then
-    err "secret らしき文字列を検出。送信中止 (pattern: $re)"
-    exit 1
+  grep_rc=0
+  grep -Eiq -- "$re" "$msg_file" 2>/dev/null || grep_rc=$?
+  if [ "$grep_rc" -eq 0 ]; then
+    err "secret らしき文字列を検出。送信中止 (pattern: $re)"; exit 1
+  elif [ "$grep_rc" -ge 2 ]; then
+    err "secret check 実行エラー (pattern: $re, fail-closed)"; exit 1
   fi
 done
 
 # --- commit ---
 rel="$(basename "$msg_file")"
-( cd "$CC_COMMS_DIR" && git add -A >/dev/null 2>&1 \
+( cd "$CC_COMMS_DIR" && git add -- "$msg_file" >/dev/null 2>&1 \
     && git commit -qm "[cc-comms] send $kind $rel" >/dev/null 2>&1 ) || {
   err "commit 失敗 (fail-closed)"; exit 1; }
 
