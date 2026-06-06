@@ -58,7 +58,12 @@
       "Bash(git stash list:*)",
       "Read(~/.cc-client-memory/**)",
       "Edit(~/.cc-client-memory/**)",
-      "Write(~/.cc-client-memory/**)"
+      "Write(~/.cc-client-memory/**)",
+      "Read(~/.cc-client-comms/**)",
+      "Edit(~/.cc-client-comms/**)",
+      "Write(~/.cc-client-comms/**)",
+      "Bash(~/.cc-client-comms/cc-comms-send.sh:*)",
+      "Bash(git -C ~/.cc-client-comms pull:*)"
     ]
   },
   "hooks": {
