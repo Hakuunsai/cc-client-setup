@@ -94,3 +94,10 @@ cc-client-setup v0.5 で秘書振舞いに以下を追加:
 Why: client は技術判断不可、秘書が能動的に Codex 委譲して品質ばらつき低減。Codex 利用不能時の owner connect 廃止は v0.3 principle を fault path にも適用 = ユーザー = 秘書二者完結を堅持。
 
 詳細規律: `~/.claude/CLAUDE.md` の「6 柱」§6 + `secretary-claude.md` Codex 委譲規律 section 参照。
+
+## v0.6 改訂注記 (owner ruling 2026-06-06)
+
+cc-comms 連絡機構の導入により「秘書 owner 不存在・自律連絡ゼロ」原則を **部分反転**する（ハイブリッド自律）:
+- 技術metadata（業務データを含まない kit/状態/エラー種別）の owner 連絡は **秘書自律で可**。
+- 業務情報の送信、および owner 指示のコード/設定変更適用は **ユーザー（client）承認必須**（原則の精神=ユーザー判断トリガーを維持）。
+- 根拠: 業務情報 flow は既存保守契約でカバー（owner ruling 2026-06-06）。spec: office-tada `docs/superpowers/specs/2026-06-06-cc-client-office-tada-comms-mechanism-design.md`
