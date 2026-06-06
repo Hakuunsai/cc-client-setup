@@ -25,9 +25,16 @@ regexes=(
 
 hits=()
 while IFS= read -r file; do
-  [ -f "$file" ] || continue
+  [ -n "$file" ] || continue
+  # binary file は skip (numstat が "-\t-")
+  if git diff --cached --numstat -- "$file" 2>/dev/null | grep -qP '^-\t-\t'; then
+    continue
+  fi
+  # working tree ではなく staged blob (index 内容) を検査する。
+  # (git add secret → working tree を clean に戻して commit、を取りこぼさないため)
+  content="$(git show ":$file" 2>/dev/null)" || continue
   for i in "${!regexes[@]}"; do
-    if grep -Eiq "${regexes[$i]}" "$file" 2>/dev/null; then
+    if printf '%s' "$content" | grep -Eiq "${regexes[$i]}"; then
       hits+=("$file : ${names[$i]}")
     fi
   done

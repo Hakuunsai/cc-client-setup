@@ -22,6 +22,14 @@ tmp="$(mktemp -d)"
   git add ok.txt
   bash "$HOOK" >/dev/null 2>&1
   [ $? -eq 0 ] && echo "PASS: clean passes (exit 0)" || { echo "FAIL: clean blocked"; exit 1; }
+
+  # 3) staged blob に secret、working tree は clean に上書き → それでも exit 1
+  #    (git add secret → working tree clean → commit のすり抜けを防ぐ。Codex Finding 1)
+  echo 'key = "AKIAIOSFODNN7EXAMPLE"' > sneaky.txt
+  git add sneaky.txt
+  echo 'now clean' > sneaky.txt   # working tree だけ clean に
+  bash "$HOOK" >/dev/null 2>&1
+  [ $? -eq 1 ] && echo "PASS: staged-blob secret blocked (working tree clean でも検出)" || { echo "FAIL: staged-blob secret leaked"; exit 1; }
 ) || fail=1
 rm -rf "$tmp"
 exit $fail
