@@ -1,0 +1,112 @@
+{
+  "autoMemoryDirectory": "<USER_HOME>/.cc-client-memory",
+  "extraKnownMarketplaces": {
+    "cc-company": {
+      "source": { "source": "github", "repo": "Shin-sibainu/cc-company" }
+    },
+    "claude-plugins-official": {
+      "source": { "source": "github", "repo": "anthropics/claude-plugins-official" }
+    },
+    "openai-codex": {
+      "source": { "source": "github", "repo": "openai/codex-plugin-cc" }
+    }
+  },
+  "enabledPlugins": {
+    "company@cc-company": true,
+    "superpowers@claude-plugins-official": true,
+    "codex@openai-codex": true
+  },
+  "permissions": {
+    "defaultMode": "default",
+    "deny": [
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(Invoke-WebRequest:*)",
+      "Bash(Invoke-RestMethod:*)",
+      "Bash(pip install:*)",
+      "Bash(npm install:*)",
+      "Bash(env)",
+      "Bash(printenv)",
+      "Bash(Get-ChildItem Env:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(cmd /c:*)",
+      "Bash(bash -c:*)",
+      "Bash(codex:*)",
+      "Bash(codex)",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.azure/**)",
+      "Read(*Local.*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git checkout .:*)",
+      "Bash(rm:*)",
+      "Bash(Remove-Item:*)"
+    ],
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git stash list:*)",
+      "Read(~/.cc-client-memory/**)",
+      "Edit(~/.cc-client-memory/**)",
+      "Write(~/.cc-client-memory/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash <USER_HOME>/.claude/hooks/inject-auto-company-skill.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash <USER_HOME>/.claude/hooks/PreToolUse-DenyDangerous.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash <USER_HOME>/.claude/hooks/PostToolUse-AutoCheckpoint.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash <USER_HOME>/.claude/hooks/memory-local-commit.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
