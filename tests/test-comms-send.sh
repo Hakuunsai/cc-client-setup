@@ -104,6 +104,38 @@ junk_in_bare=$(git --git-dir="$bare" ls-tree -r --name-only HEAD 2>/dev/null | g
 check "inbox/junk.md not pushed to bare" "$junk_in_bare" 0
 teardown
 
+# Case 8: inbox 配下のパスを渡すと拒否 (exit 1) — F-1 path validation lock
+setup
+mkdir -p "$CC_COMMS_DIR/inbox"
+cat > "$CC_COMMS_DIR/inbox/evil.md" <<'MSGEOF'
+---
+msg_id: evil-001
+direction: client-to-owner
+kind: metadata
+status: draft
+---
+should be rejected
+MSGEOF
+"$SCRIPT" "$CC_COMMS_DIR/inbox/evil.md" >/dev/null 2>&1
+check "inbox path rejected exits 1" $? 1
+teardown
+
+# Case 9: path traversal (outbox/../inbox) を渡すと拒否 (exit 1) — F-1 path traversal lock
+setup
+mkdir -p "$CC_COMMS_DIR/inbox"
+cat > "$CC_COMMS_DIR/inbox/evil.md" <<'MSGEOF'
+---
+msg_id: evil-002
+direction: client-to-owner
+kind: metadata
+status: draft
+---
+should be rejected via traversal
+MSGEOF
+"$SCRIPT" "$CC_COMMS_DIR/outbox/../inbox/evil.md" >/dev/null 2>&1
+check "path traversal rejected exits 1" $? 1
+teardown
+
 echo "---"
 [ "$fail" -eq 0 ] && echo "ALL PASS" || echo "SOME FAILED"
 exit $fail

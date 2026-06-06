@@ -30,8 +30,16 @@ if (-not (Test-Path (Join-Path $CommsDir '.git'))) {
     Err "comms repo 未初期化: $CommsDir (fail-closed)"; exit 1
 }
 
+# --- msg_file が outbox/ 配下に限定（path traversal / 外部パス / inbox 巻き込みを拒否）---
+$msgFull    = (Resolve-Path -LiteralPath $MsgFile -ErrorAction SilentlyContinue).Path
+$outboxFull = (Resolve-Path -LiteralPath (Join-Path $CommsDir 'outbox') -ErrorAction SilentlyContinue).Path
+if (-not $msgFull -or -not $outboxFull -or -not $msgFull.StartsWith($outboxFull)) {
+    Err "msg ファイルは outbox/ 配下に限定 (fail-closed): $MsgFile"; exit 1
+}
+
 # --- kind 取得（frontmatter の kind:、先頭 1 件）---
-$content   = Get-Content -Raw $MsgFile -ErrorAction Stop
+try { $content = Get-Content -Raw -LiteralPath $MsgFile -ErrorAction Stop }
+catch { Err "msg ファイル読み取り失敗 (fail-closed): $MsgFile"; exit 1 }
 $kindMatch = [regex]::Match($content, '(?m)^kind:\s*(\S+)')
 $kind      = if ($kindMatch.Success) { $kindMatch.Groups[1].Value.Trim() } else { '' }
 

@@ -19,6 +19,15 @@ command -v git  >/dev/null 2>&1 || { err "git 不在 (fail-closed: 送信中止)
 [ -f "$msg_file" ] || { err "msg ファイルが見つからない: $msg_file (fail-closed)"; exit 1; }
 [ -d "$CC_COMMS_DIR/.git" ] || { err "comms repo 未初期化: $CC_COMMS_DIR (fail-closed)"; exit 1; }
 
+# --- msg_file が outbox/ 配下に限定（path traversal / 外部パス / inbox 巻き込みを拒否）---
+msg_dir_abs="$(cd "$(dirname "$msg_file")" 2>/dev/null && pwd -P)"
+comms_abs="$(cd "$CC_COMMS_DIR" 2>/dev/null && pwd -P)"
+case "$msg_dir_abs/" in
+  "$comms_abs"/outbox/*) ;;
+  "$comms_abs"/outbox/) ;;
+  *) err "msg ファイルは \$CC_COMMS_DIR/outbox/ 配下に限定 (fail-closed): $msg_file"; exit 1 ;;
+esac
+
 # --- kind 取得（frontmatter の kind:）---
 # frontmatter に kind 行が複数あれば先頭を採用
 kind="$(grep -m1 -E '^kind:[[:space:]]*' "$msg_file" 2>/dev/null | sed -E 's/^kind:[[:space:]]*//' | tr -d '[:space:]')"

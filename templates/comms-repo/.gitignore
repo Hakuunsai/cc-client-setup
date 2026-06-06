@@ -7,3 +7,9 @@ id_*
 .env
 .env.*
 *.secret
+*.p12
+*.pfx
+*.p8
+service-account*.json
+credentials*.json
+*.keystore
