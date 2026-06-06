@@ -277,15 +277,15 @@ owner に以下を案内（repo + deploy key が用意済であれば実行）:
 # cc-comms repo が未 clone なら clone（owner 提供の SSH URL を使用）
 [ ! -d ~/.cc-client-comms/.git ] && git clone <comms-repo-ssh-url> ~/.cc-client-comms
 
-# cc-comms-send.sh をコピー + 実行権限付与
-# （kit の hooks/ から取得済みの場合、または kit raw URL から WebFetch でも可）
-cp ~/.claude/hooks/cc-comms-send.sh ~/.cc-client-comms/cc-comms-send.sh 2>/dev/null || \
-  # WebFetch {kit raw URL prefix}/hooks/cc-comms-send.sh → Write ~/.cc-client-comms/cc-comms-send.sh
-  true
-chmod +x ~/.cc-client-comms/cc-comms-send.sh
-
 # 配備確認
 [ -d ~/.cc-client-comms/.git ] && echo "cc-comms: ready" || echo "cc-comms: clone 失敗"
+```
+
+**注意**: executor (`cc-comms-send.sh`) は owner が setup 時に `~/.cc-comms-bin/cc-comms-send.sh`（読み取り専用 chmod 555）に配置済です。本 Step では clone + executor の存在 verify のみ行います。executor を client 側で copy・編集しないでください（書込不可を維持することでゲート改竄を防止）。
+
+```bash
+# executor の存在確認（owner が事前配置済のはず）
+test -x ~/.cc-comms-bin/cc-comms-send.sh && echo "executor: ready" || echo "executor: 未配置（owner に確認）"
 ```
 
 **deploy key 配置** (owner が事前準備):
@@ -295,7 +295,7 @@ chmod +x ~/.cc-client-comms/cc-comms-send.sh
 - `~/.ssh/config` に Host alias 設定済（`Host cc-comms.github.com` / `HostName github.com` / `IdentityFile ~/.ssh/cc-comms_ed25519`）
 - comms repo の remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
 
-Claude (あなた) の Step 11.7 完了報告は「owner に手順を案内し、deploy key 配備済の場合のみ clone + copy を実行した（未提供の場合は skip）」で OK。
+Claude (あなた) の Step 11.7 完了報告は「owner に手順を案内し、deploy key 配備済の場合のみ clone を実行し、executor の存在を verify した（未提供の場合は skip）」で OK。
 
 ### Step 12: 完了確認
 

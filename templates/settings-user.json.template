@@ -44,6 +44,7 @@
     ],
     "ask": [
       "Bash(git push:*)",
+      "Bash(git -C ~/.cc-client-comms push:*)",
       "Bash(git reset --hard:*)",
       "Bash(git checkout .:*)",
       "Bash(rm:*)",
@@ -62,7 +63,7 @@
       "Read(~/.cc-client-comms/**)",
       "Edit(~/.cc-client-comms/**)",
       "Write(~/.cc-client-comms/**)",
-      "Bash(~/.cc-client-comms/cc-comms-send.ps1:*)",
+      "Bash(~/.cc-comms-bin/cc-comms-send.ps1:*)",
       "Bash(git -C ~/.cc-client-comms pull:*)"
     ]
   },

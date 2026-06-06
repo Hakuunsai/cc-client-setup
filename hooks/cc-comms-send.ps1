@@ -30,18 +30,34 @@ if (-not (Test-Path (Join-Path $CommsDir '.git'))) {
     Err "comms repo 未初期化: $CommsDir (fail-closed)"; exit 1
 }
 
-# --- msg_file が outbox/ 配下に限定（path traversal / 外部パス / inbox 巻き込みを拒否）---
+# --- msg_file が outbox/ 配下に限定（path traversal / 外部パス / inbox 巻き込みを拒否）— H-2 区切り文字要求 ---
 $msgFull    = (Resolve-Path -LiteralPath $MsgFile -ErrorAction SilentlyContinue).Path
 $outboxFull = (Resolve-Path -LiteralPath (Join-Path $CommsDir 'outbox') -ErrorAction SilentlyContinue).Path
-if (-not $msgFull -or -not $outboxFull -or -not $msgFull.StartsWith($outboxFull)) {
+$sep = [System.IO.Path]::DirectorySeparatorChar
+if (-not $msgFull -or -not $outboxFull -or -not $msgFull.StartsWith($outboxFull + $sep)) {
     Err "msg ファイルは outbox/ 配下に限定 (fail-closed): $MsgFile"; exit 1
 }
 
-# --- kind 取得（frontmatter の kind:、先頭 1 件）---
+# --- kind 取得（frontmatter ブロック内に厳密 1 行 — H-3 strict singleton）---
 try { $content = Get-Content -Raw -LiteralPath $MsgFile -ErrorAction Stop }
 catch { Err "msg ファイル読み取り失敗 (fail-closed): $MsgFile"; exit 1 }
-$kindMatch = [regex]::Match($content, '(?m)^kind:\s*(\S+)')
-$kind      = if ($kindMatch.Success) { $kindMatch.Groups[1].Value.Trim() } else { '' }
+
+# frontmatter ブロック（先頭 '---' 〜 次 '---'）を抽出
+$fmMatch = [regex]::Match($content, '(?s)^---[^\S\r\n]*\r?\n(.*?)\r?\n---[^\S\r\n]*(\r?\n|$)')
+if (-not $fmMatch.Success) {
+    Err "frontmatter ブロックが見つからない (fail-closed)"; exit 1
+}
+$fm = $fmMatch.Groups[1].Value
+
+# frontmatter 内の 'kind:' 行数を厳密に 1 行検証
+$kindLines = @([regex]::Matches($fm, '(?m)^kind:'))
+if ($kindLines.Count -ne 1) {
+    Err "kind は frontmatter 内に厳密 1 行 (検出=$($kindLines.Count), fail-closed)"; exit 1
+}
+
+# 値は前後空白のみ trim、内部空白は残す（'meta data' 等を弾く）
+$kindLineMatch = [regex]::Match($fm, '(?m)^kind:\s*(.*?)(\r?\n|$)')
+$kind = if ($kindLineMatch.Success) { $kindLineMatch.Groups[1].Value.Trim() } else { '' }
 
 if ($kind -ne 'metadata' -and $kind -ne 'business') {
     Err "kind は metadata|business のみ (取得値='$kind', fail-closed)"; exit 1
@@ -65,19 +81,28 @@ foreach ($re in $secretRegexes) {
     }
 }
 
-# --- commit（msg_file 限定: inbox 全体 add を避ける）---
+# --- commit（pathspec 限定: msg_file のみ commit — C-2 staged 全体 commit 防止）---
 $rel = Split-Path $MsgFile -Leaf
 
 Push-Location $CommsDir
 try {
     git add -- $MsgFile 2>&1 | Out-Null
-    git commit -qm "[cc-comms] send $kind $rel" 2>&1 | Out-Null
+    git commit -qm "[cc-comms] send $kind $rel" -- $MsgFile 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Err 'commit 失敗 (fail-closed)'; exit 1
     }
 
     # --- kind による push 分岐 ---
     if ($kind -eq 'metadata') {
+        # C-1: 未送信 commit が今の 1 件のみであることを保証（business 相乗り防止）
+        $upstream = git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null
+        if (-not $upstream) {
+            Err 'upstream 未設定 (fail-closed): metadata 自律 push 不可'; exit 1
+        }
+        $unpushed = git rev-list "$upstream..HEAD" --count 2>$null
+        if ($unpushed -ne '1') {
+            Err "未送信 commit が他にあります (unpushed=$unpushed)。business 相乗り防止のため metadata 自律送信を中止 (fail-closed)。先に未送信分を解決してください"; exit 1
+        }
         $localBranch = git rev-parse --abbrev-ref HEAD 2>$null
         git push -q $CommsRemote "HEAD:${localBranch}" 2>&1 | Out-Null
         $pushRc = $LASTEXITCODE
@@ -88,9 +113,9 @@ try {
             Err 'push 失敗 (commit は済。後で再送可)'; exit 1
         }
     } else {
-        # business: commit のみ、push しない
+        # H-1: business 承認 push 案内 — 'cd ... && git push' 形式で Bash(git push:*) ask にマッチ
         Err "business を commit しました（未送信）。送信するには client 承認が必要です:"
-        Err "  git -C `"$CommsDir`" push $CommsRemote HEAD"
+        Err "  cd ~/.cc-client-comms && git push"
         exit 0
     }
 } finally {

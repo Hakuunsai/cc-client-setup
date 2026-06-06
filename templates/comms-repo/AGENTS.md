@@ -2,8 +2,8 @@
 
 ## 送信（client→owner, outbox/）
 1. `outbox/<msg_id>.md` を frontmatter 付きで作成
-2. `kind: metadata` → `cc-comms-send.sh <file>`（自律）
-3. `kind: business` → `cc-comms-send.sh <file>` で commit → owner に送る旨を client に確認 → `git push`（client 承認）
+2. `kind: metadata` → `~/.cc-comms-bin/cc-comms-send.sh <file>`（自律）
+3. `kind: business` → `~/.cc-comms-bin/cc-comms-send.sh <file>` で commit → owner に送る旨を client に確認 → `cd ~/.cc-client-comms && git push`（client 承認）
 
 ## 受信（owner→client, inbox/）
 1. `git pull` で inbox/ を取得

@@ -287,13 +287,15 @@ if (-not (Test-Path "$env:USERPROFILE\.cc-client-comms\.git")) {
     git clone "<comms-repo-ssh-url>" "$env:USERPROFILE\.cc-client-comms"
 }
 
-# cc-comms-send.ps1 をコピー（実行権限は Windows では不要）
-# （kit の hooks/ から取得済みの場合、または kit raw URL から WebFetch でも可）
-Copy-Item "$env:USERPROFILE\.claude\hooks\cc-comms-send.ps1" `
-          "$env:USERPROFILE\.cc-client-comms\cc-comms-send.ps1" -Force
-
 # 配備確認
 if (Test-Path "$env:USERPROFILE\.cc-client-comms\.git") { "cc-comms: ready" } else { "cc-comms: clone 失敗" }
+```
+
+**注意**: executor (`cc-comms-send.ps1`) は owner が setup 時に `$env:USERPROFILE\.cc-comms-bin\cc-comms-send.ps1`（ACL 読み取り専用）に配置済です。本 Step では clone + executor の存在 verify のみ行います。executor を client 側で copy・編集しないでください（書込不可を維持することでゲート改竄を防止）。
+
+```powershell
+# executor の存在確認（owner が事前配置済のはず）
+if (Test-Path "$env:USERPROFILE\.cc-comms-bin\cc-comms-send.ps1") { "executor: ready" } else { "executor: 未配置（owner に確認）" }
 ```
 
 **deploy key 配置** (owner が事前準備):
@@ -303,7 +305,7 @@ if (Test-Path "$env:USERPROFILE\.cc-client-comms\.git") { "cc-comms: ready" } el
 - `$env:USERPROFILE\.ssh\config` に Host alias 設定済（`Host cc-comms.github.com` / `HostName github.com` / `IdentityFile ...cc-comms_ed25519`）
 - comms repo の remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
 
-Claude (あなた) の Step 11.7 完了報告は「owner に手順を案内し、deploy key 配備済の場合のみ clone + copy を実行した（未提供の場合は skip）」で OK。
+Claude (あなた) の Step 11.7 完了報告は「owner に手順を案内し、deploy key 配備済の場合のみ clone を実行し、executor の存在を verify した（未提供の場合は skip）」で OK。
 
 ### Step 12: 完了確認
 

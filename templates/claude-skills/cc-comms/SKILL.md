@@ -19,10 +19,10 @@ client 秘書 ↔ owner office-tada 秘書の双方向連絡を扱う。
 1. 連絡内容を業務言語で整理し、`outbox/<msg_id>.md` を frontmatter 付きで作成
    （msg_id=日付+連番 / direction: client-to-owner / kind / status: draft / keyword）
 2. **技術的な相談・状態通知（業務データを含まない）= kind: metadata**
-   → `~/.cc-client-comms/cc-comms-send.sh <file>` を実行（自律送信）
+   → `~/.cc-comms-bin/cc-comms-send.sh <file>` を実行（自律送信）
 3. **業務情報を含む = kind: business**
-   → `cc-comms-send.sh <file>`（commit のみ）→ ユーザーに「owner に業務情報を送ります。よろしいですか?」を確認
-   → 承認後 `git -C ~/.cc-client-comms push`（送信ゲート）
+   → `~/.cc-comms-bin/cc-comms-send.sh <file>`（commit のみ）→ ユーザーに「owner に業務情報を送ります。よろしいですか?」を確認
+   → 承認後 `cd ~/.cc-client-comms && git push`（送信ゲート）
 4. secret（鍵/トークン/パスワード）は本文に書かない（スクリプトが検出して送信を止める）
 
 ## 受信（owner から）

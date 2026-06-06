@@ -88,7 +88,19 @@ Claude の完了報告 (kit-prompt.md Step 14 出力) を確認:
    ```
    remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
 5. comms repo template（`templates/comms-repo/`）を初期 push（outbox/inbox/archive/README/AGENTS）
-6. kit-prompt の **Step 11.7** を owner が手動で実行（clone + copy-item）
+6. **executor を `~/.cc-comms-bin/` に配置**（セキュリティ上重要: executor は comms データ repo と分離し書込不可にする）:
+   ```powershell
+   # Windows: executor を読み取り専用で配置（~/.cc-comms-bin/ は settings の allow/Write に含めない）
+   New-Item -ItemType Directory -Force "$env:USERPROFILE\.cc-comms-bin"
+   Copy-Item "hooks\cc-comms-send.ps1" "$env:USERPROFILE\.cc-comms-bin\cc-comms-send.ps1" -Force
+   # ACL で読み取り専用（書き込み権限を削除）
+   $acl = Get-Acl "$env:USERPROFILE\.cc-comms-bin\cc-comms-send.ps1"
+   $acl.SetAccessRuleProtection($true, $false)
+   $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, 'ReadAndExecute', 'Allow')
+   $acl.SetAccessRule($rule)
+   Set-Acl "$env:USERPROFILE\.cc-comms-bin\cc-comms-send.ps1" $acl
+   ```
+7. kit-prompt の **Step 11.7** を owner が手動で実行（clone のみ、executor は上記で配置済）
 
 ## Step 5: claude 再起動 + SessionStart hook 確認 (2 min)
 
@@ -180,7 +192,14 @@ Claude の完了報告 (kit-prompt-linux.md Step 14 出力) を確認。**Linux 
    ```
    remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
 5. comms repo template（`templates/comms-repo/`）を初期 push（outbox/inbox/archive/README/AGENTS）
-6. kit-prompt の **Step 11.7** を owner が手動で実行（clone + chmod +x）
+6. **executor を `~/.cc-comms-bin/` に配置**（セキュリティ上重要: executor は comms データ repo と分離し書込不可にする）:
+   ```bash
+   # Linux: executor を読み取り専用で配置（~/.cc-comms-bin/ は settings の allow/Write に含めない）
+   mkdir -p ~/.cc-comms-bin
+   cp hooks/cc-comms-send.sh ~/.cc-comms-bin/cc-comms-send.sh
+   chmod 555 ~/.cc-comms-bin/cc-comms-send.sh
+   ```
+7. kit-prompt の **Step 11.7** を owner が手動で実行（clone のみ、executor は上記で配置済）
 
 ## Step 5: 再起動 + SessionStart hook 確認
 

@@ -13,8 +13,10 @@ setup() {
       && git remote add origin "$bare" \
       && mkdir -p outbox inbox archive && touch outbox/.gitkeep \
       && git add -A && git commit -qm init \
-      && git push -q origin HEAD:refs/heads/main 2>/dev/null \
-      || git push -q origin HEAD:refs/heads/master 2>/dev/null )
+      && ( git push -q -u origin HEAD:refs/heads/main 2>/dev/null \
+           || git push -q -u origin HEAD:refs/heads/master 2>/dev/null ) \
+      && _branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" \
+      && git branch --set-upstream-to="origin/$_branch" "$_branch" 2>/dev/null )
   export CC_COMMS_DIR="$work"
   export CC_COMMS_REMOTE="origin"
 }
@@ -134,6 +136,63 @@ should be rejected via traversal
 MSGEOF
 "$SCRIPT" "$CC_COMMS_DIR/outbox/../inbox/evil.md" >/dev/null 2>&1
 check "path traversal rejected exits 1" $? 1
+teardown
+
+# Case 10 (C-1): business commit 後に metadata 送信を試みると exit 1（business 相乗り防止）
+setup
+write_msg b_stale.md business "業務相談の未送信コミット"
+"$SCRIPT" "$CC_COMMS_DIR/outbox/b_stale.md" >/dev/null 2>&1
+# この時点で business commit が 1 件ある（未 push）
+write_msg m_after.md metadata "metadata after business"
+"$SCRIPT" "$CC_COMMS_DIR/outbox/m_after.md" >/dev/null 2>&1
+check "C-1: business 相乗り防止で metadata exit 1" $? 1
+# bare に business も metadata も push されていないこと
+c1_pushed=$(cd "$bare" && git log --all --oneline 2>/dev/null | grep -cE "b_stale|m_after" || true)
+check "C-1: bare に何も push されていない" "$c1_pushed" 0
+teardown
+
+# Case 11 (C-2): staged に evil ファイルがあっても msg_file のみ commit される（pathspec 限定）
+setup
+write_msg c2_clean.md metadata "clean metadata msg"
+# 悪意ある別ファイルを stage に乗せる
+echo "AKIA_EVIL=not_a_real_key_just_test_c2" > "$CC_COMMS_DIR/evil.txt"
+( cd "$CC_COMMS_DIR" && git add -f evil.txt >/dev/null 2>&1 )
+"$SCRIPT" "$CC_COMMS_DIR/outbox/c2_clean.md" >/dev/null 2>&1
+check "C-2: staged evil あり metadata exits 0" $? 0
+# bare の HEAD ツリーに evil.txt が含まれないこと
+evil_in_bare=$(git --git-dir="$bare" ls-tree -r --name-only HEAD 2>/dev/null | grep -c "evil.txt" || true)
+check "C-2: evil.txt が bare に含まれない" "$evil_in_bare" 0
+teardown
+
+# Case 12 (H-3a): kind に内部空白（'meta data'）→ exit 1
+setup
+cat > "$CC_COMMS_DIR/outbox/h3a.md" <<'MSGEOF'
+---
+msg_id: h3a-001
+direction: client-to-owner
+kind: meta data
+status: draft
+---
+body
+MSGEOF
+"$SCRIPT" "$CC_COMMS_DIR/outbox/h3a.md" >/dev/null 2>&1
+check "H-3a: kind='meta data' (内部空白) exits 1" $? 1
+teardown
+
+# Case 13 (H-3b): frontmatter に kind: 行が 2 つ → exit 1
+setup
+cat > "$CC_COMMS_DIR/outbox/h3b.md" <<'MSGEOF'
+---
+msg_id: h3b-001
+direction: client-to-owner
+kind: metadata
+kind: business
+status: draft
+---
+body
+MSGEOF
+"$SCRIPT" "$CC_COMMS_DIR/outbox/h3b.md" >/dev/null 2>&1
+check "H-3b: kind 行が 2 つ exits 1" $? 1
 teardown
 
 echo "---"

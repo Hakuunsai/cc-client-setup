@@ -28,12 +28,16 @@ case "$msg_dir_abs/" in
   *) err "msg ファイルは \$CC_COMMS_DIR/outbox/ 配下に限定 (fail-closed): $msg_file"; exit 1 ;;
 esac
 
-# --- kind 取得（frontmatter の kind:）---
-# frontmatter に kind 行が複数あれば先頭を採用
-kind="$(grep -m1 -E '^kind:[[:space:]]*' "$msg_file" 2>/dev/null | sed -E 's/^kind:[[:space:]]*//' | tr -d '[:space:]')"
+# --- kind 取得（frontmatter ブロック内に厳密 1 行 — H-3 strict singleton）---
+# frontmatter ブロック（先頭 '---' 〜 次 '---'）内の kind を厳密に取得
+fm="$(awk 'NR==1&&/^---[[:space:]]*$/{f=1;next} f&&/^---[[:space:]]*$/{exit} f{print}' "$msg_file" 2>/dev/null)"
+kind_count="$(printf '%s\n' "$fm" | grep -cE '^kind:' 2>/dev/null)"
+[ "$kind_count" = "1" ] || { err "kind は frontmatter 内に厳密 1 行 (検出=$kind_count, fail-closed)"; exit 1; }
+# 値は前後空白のみ trim、内部空白は残す（'meta data' 等を弾く）
+kind="$(printf '%s\n' "$fm" | grep -E '^kind:' | head -1 | sed -E 's/^kind:[[:space:]]*//; s/[[:space:]]+$//')"
 case "$kind" in
   metadata|business) ;;
-  *) err "kind は metadata|business のみ (取得値='$kind', fail-closed)"; exit 1 ;;
+  *) err "kind は metadata|business のみ (取得='$kind', fail-closed)"; exit 1 ;;
 esac
 
 # --- secret check（fail-closed: 1 件でも検出で中止）---
@@ -55,14 +59,21 @@ for re in "${secret_regexes[@]}"; do
   fi
 done
 
-# --- commit ---
+# --- commit（pathspec 限定: msg_file のみ commit — C-2 staged 全体 commit 防止）---
 rel="$(basename "$msg_file")"
 ( cd "$CC_COMMS_DIR" && git add -- "$msg_file" >/dev/null 2>&1 \
-    && git commit -qm "[cc-comms] send $kind $rel" >/dev/null 2>&1 ) || {
+    && git commit -qm "[cc-comms] send $kind $rel" -- "$msg_file" >/dev/null 2>&1 ) || {
   err "commit 失敗 (fail-closed)"; exit 1; }
 
 # --- kind による push 分岐 ---
 if [ "$kind" = "metadata" ]; then
+  # C-1: 未送信 commit が今の 1 件のみであることを保証（business 相乗り防止）
+  upstream="$(cd "$CC_COMMS_DIR" && git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"
+  [ -n "$upstream" ] || { err "upstream 未設定 (fail-closed): metadata 自律 push 不可"; exit 1; }
+  unpushed="$(cd "$CC_COMMS_DIR" && git rev-list "$upstream"..HEAD --count 2>/dev/null)"
+  if [ "$unpushed" != "1" ]; then
+    err "未送信 commit が他にあります (unpushed=$unpushed)。business 相乗り防止のため metadata 自律送信を中止 (fail-closed)。先に未送信分を解決してください"; exit 1
+  fi
   local_branch="$(cd "$CC_COMMS_DIR" && git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   if ( cd "$CC_COMMS_DIR" && git push -q "$CC_COMMS_REMOTE" "HEAD:${local_branch}" >/dev/null 2>&1 ); then
     echo "cc-comms-send: metadata 自律送信 完了 ($rel)"
@@ -71,7 +82,8 @@ if [ "$kind" = "metadata" ]; then
     err "push 失敗 (commit は済。後で再送可)"; exit 1
   fi
 else
+  # H-1: business 承認 push 案内 — 'cd ... && git push' 形式で Bash(git push:*) ask にマッチ
   echo "cc-comms-send: business を commit しました（未送信）。送信するには client 承認が必要です:" >&2
-  echo "  git -C \"$CC_COMMS_DIR\" push $CC_COMMS_REMOTE HEAD" >&2
+  echo "  cd ~/.cc-client-comms && git push" >&2
   exit 0
 fi
