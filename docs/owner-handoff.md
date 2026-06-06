@@ -103,3 +103,66 @@ owner setup 完了。client に「これからは {company-name} ショートカ
 ## 完了基準 (cc-client-setup v0.2 spec Section 7.1 = 14 件) を verify
 
 詳細は v0.2 spec Section 7.1 参照。owner 実機で 14 基準を順次 verify (30-40 min)。
+
+---
+
+# Linux 版手順 (v0.7、RHEL/Rocky/Alma 系 + VSCode Remote-SSH + Claude 拡張)
+
+Linux 物理サーバー上の Claude Code を、Windows の VSCode から Remote-SSH 接続 + Claude Code 拡張パネルで使う構成。Claude Code 本体と hook は **リモート Linux 側**で実行される (公式 docs 確認済)。利用者は端末を一切触らず、VSCode の Claude パネルで会話するだけ。
+
+## 前提 (Linux)
+
+- owner WSL local に `Hakuunsai/cc-client-setup` repo clone 済
+- owner GitHub PAT 持ち
+- Linux サーバー (RHEL/Rocky/Alma 系) に SSH アクセス可能
+- Windows 側に VSCode + Remote-SSH 拡張 + Claude Code 拡張
+
+## Step 0: office-tada 秘書で Phase A hearing (Windows 版と同一)
+
+`hearing-sop-owner.md` の Q-owner-1〜4 を hearing → `per-client/{client-id}/` に customize 物生成 (kit-prompt は **`kit-prompt-linux.md`** を base に生成)。
+
+## Step 1: Linux サーバー環境準備 (owner 代行・冪等)
+
+```bash
+# git / jq (jq は PreToolUse deny hook の JSON 抽出に必須)
+sudo dnf install -y git jq
+
+# Claude Code (公式 installer)。既 install ならバージョン確認のみ
+# node (Codex 用・任意): sudo dnf install -y nodejs  または nvm
+```
+
+## Step 2: フォルダ + VSCode 接続
+
+```bash
+mkdir -p ~/source/{company-name}
+```
+
+- owner が VSCode に **Remote-SSH 接続先 (Linux サーバー) + 保存ワークスペース (`~/source/{company-name}/`)** を設定
+- VSCode に Claude Code 拡張を install (リモート側で有効化)
+
+## Step 3: kit-prompt paste + Claude 自律 setup (15-25 min)
+
+owner 手元の `~/repos/cc-client-setup/per-client/{client-id}/kit-prompt.md` (= Linux 版) の中身を、Claude 拡張パネル (またはリモート terminal の `claude`) に paste。Claude が自律で Step 1-14 を実行。
+
+## Step 4: 完了確認 + cheatsheet (3 min)
+
+Claude の完了報告 (kit-prompt-linux.md Step 14 出力) を確認。**Linux 版 cheatsheet** (起動方法 = VSCode 拡張パネル) を chat 出力 → 印刷 / PDF 化で client に渡す。
+
+## Step 5: 再起動 + SessionStart hook 確認
+
+VSCode で Claude を再起動 → SessionStart hook で `/company` が自動発動することを確認。
+
+(option) owner 同席なら Phase B hearing を実行。
+
+## 日常導線 (client へ引き継ぎ)
+
+> 「**VSCode を開く → 自動接続 → Claude (クロード) パネルで話しかける**」だけ。ターミナルは不要です。
+
+## トラブルシュート (Linux 固有)
+
+| 症状 | 対応 |
+|---|---|
+| PreToolUse deny が効かない | `command -v jq` で jq 確認、無ければ `sudo dnf install -y jq` |
+| hook が動かない | `~/.claude/settings.json` の hooks が `bash ...` 登録か、hook に `chmod +x` 済か確認 |
+| Codex 委譲が使えない | `node --version` / `codex --version` / `~/.codex/auth.json` 確認、degraded mode で他機能は動作 |
+| Claude パネルがリモートに繋がらない | VSCode 左下の Remote-SSH 接続状態を確認 |

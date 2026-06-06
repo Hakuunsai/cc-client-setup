@@ -5,7 +5,8 @@ owner クライアント (プログラミング未経験者) 向け Claude Code 
 ## 配布形態
 
 - **public GitHub repo** (`Hakuunsai/cc-client-setup`、機微なし)
-- 配布物 = markdown + template + 4 hook script のみ (PowerShell bootstrap script 0 行)
+- 配布物 = markdown + template + hook script のみ (PowerShell bootstrap script 0 行)
+- **OS 2 系統併存** (v0.7〜): Windows native (`kit-prompt.md` + `*.ps1` hook) / Linux RHEL 系 + VSCode Remote-SSH + Claude 拡張 (`kit-prompt-linux.md` + `*.sh` hook)
 - owner 代行で 1 PC 30-40 min セットアップ
 
 ## クイックスタート (owner 用)
@@ -22,7 +23,8 @@ owner クライアント (プログラミング未経験者) 向け Claude Code 
 
 ### Core (Claude 自律 setup の中心)
 
-- [`kit-prompt.md`](kit-prompt.md) ⭐ メイン指示書 (約 250 行、Claude が自律 setup する Step 1-14)
+- [`kit-prompt.md`](kit-prompt.md) ⭐ メイン指示書 (Windows、Claude が自律 setup する Step 1-14)
+- [`kit-prompt-linux.md`](kit-prompt-linux.md) ⭐ メイン指示書 (Linux RHEL 系 + VSCode 拡張、v0.7 追加)
 - [`kit-prompt-update.md`](kit-prompt-update.md) - 改訂時差分指示書 (約 50 行)
 
 ### Templates (Claude が WebFetch で取得して client PC に配置)
@@ -30,24 +32,30 @@ owner クライアント (プログラミング未経験者) 向け Claude Code 
 - `templates/claude-rules/` - セキュリティ rules 3 file
 - `templates/claude-md-user.template` - `~/.claude/CLAUDE.md` (姿勢 + ペルソナ + 5 柱、約 150 行)
 - `templates/claude-md-project.template` - PJ 別 `CLAUDE.md`
-- `templates/settings-user.json.template` - `~/.claude/settings.json` (plugin + hook + permissions)
+- `templates/settings-user.json.template` - `~/.claude/settings.json` (plugin + hook + permissions、Windows)
+- `templates/settings-user.linux.json.template` - 同上 Linux 版 (hook 登録を bash 化、v0.7 追加)
 - `templates/settings-project.json.template` - PJ 別 `.claude/settings.json` (空テンプレ)
 - `templates/secretary-claude.md.template` - `.company/secretary/CLAUDE.md` (cc-company plugin 連携)
 - `templates/gitignore.template` - generic Windows + 言語中立
-- `templates/pre-commit.ps1.template` - pre-commit hook (secret regex grep)
+- `templates/pre-commit.ps1.template` - pre-commit hook (secret regex grep、Windows)
+- `templates/pre-commit.sh.template` - 同上 Linux 版 (単一 bash file、v0.7 追加)
 - `templates/memory-seed/` - memory baseline 4 file (3 baseline + 1 client persona template)
 
 ### Hooks (`~/.claude/hooks/` 配置)
 
 - `hooks/inject-auto-company-skill.sh` - SessionStart hook (Claude に `/company:company` 自動発動を指示)
 - `hooks/memory-local-commit.sh` - Stop hook (`~/.cc-client-memory/` local commit)
-- `hooks/PreToolUse-DenyDangerous.ps1` - Bash 危険操作 deny (Phase 1 流用、Codex review 反映済)
-- `hooks/PostToolUse-AutoCheckpoint.ps1` - Edit/Write 後 `git stash` で `[claude-auto-checkpoint] ...` を auto stash (Phase 1 流用、stash 方式)
+- `hooks/PreToolUse-DenyDangerous.ps1` - Bash 危険操作 deny (Windows、Phase 1 流用、Codex review 反映済)
+- `hooks/PostToolUse-AutoCheckpoint.ps1` - Edit/Write 後 `git stash` で `[claude-auto-checkpoint] ...` を auto stash (Windows)
+- `hooks/PreToolUse-DenyDangerous.sh` - 同上 Linux 版 (bash、jq で JSON 抽出、v0.7 追加)
+- `hooks/PostToolUse-AutoCheckpoint.sh` - 同上 Linux 版 (bash、v0.7 追加)
 
 ### Docs
 
 - [`docs/owner-handoff.md`](docs/owner-handoff.md) - owner 5 step 代行手順
-- [`docs/client-cheatsheet.md.template`](docs/client-cheatsheet.md.template) - client 常設カンペ (印刷推奨)
+- [`docs/client-cheatsheet.md.template`](docs/client-cheatsheet.md.template) - client 常設カンペ (Windows、印刷推奨)
+- [`docs/client-cheatsheet.linux.md.template`](docs/client-cheatsheet.linux.md.template) - 同上 Linux 版 (起動=VSCode 拡張パネル、v0.7 追加)
+- `tests/` - dev-only の hook 検証スクリプト 3 本 (配布対象外、WebFetch されない)
 - [`docs/recovery.md`](docs/recovery.md) - 「Claude が壊した」復旧ガイド
 - [`docs/installation.md`](docs/installation.md) - v0.2 installation guide
 - [`docs/backlog.md`](docs/backlog.md) - Phase 2-13 roadmap
@@ -88,5 +96,6 @@ private 配布対象 (owner / owner クライアント限定)、外部公開し�
 
 ## 改訂履歴
 
+- v0.7 (2026-06-06): Linux variant 統合 (案 A)。Linux RHEL 系 + VSCode Remote-SSH + Claude 拡張 構成向けに hook を bash 化 (`*.sh` 2本 + 単一 bash pre-commit) + `settings-user.linux.json.template` + `kit-prompt-linux.md` + Linux cheatsheet + owner-handoff Linux section。Windows 版と完全併存、md 資産は共有。生命線 (拡張+Remote-SSH で hook 発火) は公式 docs 確証済
 - v0.2 (2026-05-27): Approach W (Claude self-setup) で大ピボット、PowerShell bootstrap 廃止、hearing 2 段階構造 (owner ruling Q10) 反映
 - v0.1 (2026-05-26): Phase 1 MVP (PowerShell bootstrap)、deprecated-by-v0.2

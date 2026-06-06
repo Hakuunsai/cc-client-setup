@@ -111,6 +111,24 @@ Codex CLI + `codex@openai-codex` plugin が install 成功すると、秘書が�
 
 Codex 利用不能時 (認証切れ / network / rate limit / 応答なし) はユーザー = 秘書二者で対処、owner connect は使わない (秘書視点 owner 不存在 principle 徹底適用、v0.3 owner ruling 由来)。
 
+## Linux 版 (v0.7、RHEL/Rocky/Alma 系)
+
+Linux サーバー上の Claude Code を VSCode Remote-SSH + Claude 拡張パネルで使う構成。Windows 版との差分:
+
+- **PowerShell bootstrap なし** (Windows 版同様、Approach W 継承)
+- **hook は全て bash** (`PreToolUse-DenyDangerous.sh` / `PostToolUse-AutoCheckpoint.sh` / SessionStart / Stop)。settings の hook 登録は `bash`、`pwsh.exe` 不使用
+- **pre-commit は単一 bash file** (`.git/hooks/pre-commit`、sh shim → pwsh の 2-file layout 不要)
+- **`jq` 前提**: PreToolUse deny hook が `.tool_input.command` を jq で抽出。`sudo dnf install -y jq`。jq 不在時はフェイルオープン (settings.json deny が一次防御)
+- **install**: `winget` → `sudo dnf install` / 公式 installer / nvm
+- **launch UX**: Windows ショートカット → 「VSCode を開く → 自動接続 → Claude 拡張パネルで会話」(端末ゼロ)
+- 指示書は **`kit-prompt-linux.md`**、cheatsheet は **`docs/client-cheatsheet.linux.md.template`**
+
+詳細フローは `docs/owner-handoff.md` の「# Linux 版手順」section 参照。設計は office-tada `docs/superpowers/specs/2026-06-06-cc-client-setup-linux-variant-design.md`。
+
+### 生命線前提 (確証済)
+
+VSCode 拡張 + Remote-SSH 構成でも、`~/.claude/settings.json` の hooks は CLI と同様に **リモート Linux 側で発火**する (SessionStart の `/company` 自動発動 / PreToolUse の exit 2 deny / PostToolUse の auto-checkpoint)。公式 docs (code.claude.com/docs の ide-integrations + hooks) で確認済。注意点: hook 内に Windows パス禁止 (本 kit は `~/` 基準で対応済)。
+
 ## トラブルシュート
 
 詳細は `docs/recovery.md` 参照。

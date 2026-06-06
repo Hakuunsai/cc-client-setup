@@ -1,4 +1,22 @@
-# cc-client-setup backlog (v0.6.0)
+# cc-client-setup backlog (v0.7.0)
+
+## v0.7.0 Linux variant sprint 完走 (2026-06-06)
+
+Linux 物理サーバー + VSCode Remote-SSH + Claude 拡張 構成向けに kit を Linux ネイティブ化 (案 A、Windows 版と完全併存)。roadmap Phase 9 (macOS / WSL サポート) の Linux 部分に相当。生命線前提「拡張 + Remote-SSH でも hook は リモート Linux 側で発火」を公式 docs で確証済。
+
+| Task | 内容 |
+|---|---|
+| Task 1-3 (hook 移植) | `PreToolUse-DenyDangerous.sh` (jq で JSON 抽出、deny 等価 + フェイルオープン) / `PostToolUse-AutoCheckpoint.sh` (git stash) / `pre-commit.sh.template` (secret regex) を bash 移植 + TDD test 3 本 |
+| Task 4 (settings) | `settings-user.linux.json.template` (hook 登録を `pwsh.exe` → `bash`、timeout 15) |
+| Task 5 (kit-prompt) | `kit-prompt-linux.md` (cwd=`~/`、dnf install、単一 bash pre-commit、jq verify) + `client-cheatsheet.linux.md.template` (起動=VSCode 拡張パネル) |
+| Task 6 (docs) | owner-handoff 「# Linux 版手順」+ installation.md Linux section + README OS 2 系統 + 本 backlog |
+| Task 7 (Codex review) | セキュリティ hook (deny / auto-checkpoint / pre-commit) の等価性・バイパス耐性 review |
+
+完了基準: bash hook 3本 dry-run PASS (`tests/`) + Windows 版無傷 + jq 前提明記。
+
+spec source of truth: [office-tada `docs/superpowers/specs/2026-06-06-cc-client-setup-linux-variant-design.md`](https://github.com/Hakuunsai/office-tada-secretary)。
+
+implementation plan: [office-tada `docs/superpowers/plans/2026-06-06-cc-client-setup-linux-variant.md`](https://github.com/Hakuunsai/office-tada-secretary) (9 Task)。
 
 ## v0.6.0 秘書 self-update orchestration sprint 完走 (2026-05-27)
 
