@@ -14,6 +14,10 @@ Linux 物理サーバー + VSCode Remote-SSH + Claude 拡張 構成向けに kit
 
 完了基準: bash hook 3本 dry-run PASS (`tests/`) + Windows 版無傷 + jq 前提明記。
 
+**Codex review (verdict: failed → 3 件修正反映)**: ① pre-commit が working tree でなく staged blob を検査するよう修正 (add後 working tree clean 化のすり抜け防止) ② PostToolUse stash push 成功時のみ apply (無関係 stash 誤適用防止) ③ `--index` で staged 状態保持。各 finding に回帰テスト追加。
+
+**Windows .ps1 parity debt (follow-up)**: 上記 3 件は Windows 版 (`PreToolUse-DenyDangerous.ps1` は無関係、`PostToolUse-AutoCheckpoint.ps1` + `pre-commit.ps1.template`) にも同じ潜在問題あり。本 sprint は「Windows 版無傷」制約のため未修正。別 sprint で `.ps1` 側にも同等修正を backport 候補 (Phase 2.x)。
+
 spec source of truth: [office-tada `docs/superpowers/specs/2026-06-06-cc-client-setup-linux-variant-design.md`](https://github.com/Hakuunsai/office-tada-secretary)。
 
 implementation plan: [office-tada `docs/superpowers/plans/2026-06-06-cc-client-setup-linux-variant.md`](https://github.com/Hakuunsai/office-tada-secretary) (9 Task)。
