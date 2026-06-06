@@ -195,6 +195,31 @@ MSGEOF
 check "H-3b: kind 行が 2 つ exits 1" $? 1
 teardown
 
+# Case 14 (C-1-deep): ローカル remote-tracking ref 改竄 → ls-remote 権威で検出、exit 1 かつ bare 汚染なし
+# 攻撃シナリオ: business commit B を未 push のまま、upstream tracking が指す
+#   refs/remotes/origin/<upstream_branch> を B に書き換える
+#   → 旧ゲート（@{u}ベース）では commit C 後 rev-list B..HEAD = 1 と誤判定して通過する
+#   → 新ゲート（ls-remote ベース）では実 remote(=A) 基準で unpushed==2 を検出して中止
+setup
+# upstream tracking が指す remote branch 名を取得（例: origin/main → main）
+_upstream_sym="$(git -C "$work" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"
+_upstream_branch="${_upstream_sym#*/}"
+# B: business commit（未 push のまま）
+write_msg b_deep.md business "未送信 business commit"
+"$SCRIPT" "$CC_COMMS_DIR/outbox/b_deep.md" >/dev/null 2>&1
+b_sha="$(git -C "$work" rev-parse HEAD 2>/dev/null)"
+# 攻撃: upstream tracking が指す refs/remotes/origin/<upstream_branch> を B に書き換え
+# これにより @{u} ベースゲートは後続 commit C が乗った後 rev-list B..C = 1 と誤判定する
+git -C "$work" update-ref "refs/remotes/origin/$_upstream_branch" "$b_sha" >/dev/null 2>&1
+# C: clean metadata commit を送信試行（スクリプト内で commit → gate の順）
+write_msg m_deep.md metadata "metadata after local-ref tamper"
+"$SCRIPT" "$CC_COMMS_DIR/outbox/m_deep.md" >/dev/null 2>&1
+check "C-1-deep: ローカルref改竄後 metadata exit 1" $? 1
+# bare に B も C も push されていないこと
+c1d_pushed=$(cd "$bare" && git log --all --oneline 2>/dev/null | grep -cE "b_deep|m_deep" || true)
+check "C-1-deep: bare に B も C も push されていない" "$c1d_pushed" 0
+teardown
+
 echo "---"
 [ "$fail" -eq 0 ] && echo "ALL PASS" || echo "SOME FAILED"
 exit $fail

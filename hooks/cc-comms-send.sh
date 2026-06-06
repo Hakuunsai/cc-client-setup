@@ -68,11 +68,20 @@ rel="$(basename "$msg_file")"
 # --- kind による push 分岐 ---
 if [ "$kind" = "metadata" ]; then
   # C-1: 未送信 commit が今の 1 件のみであることを保証（business 相乗り防止）
-  upstream="$(cd "$CC_COMMS_DIR" && git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"
-  [ -n "$upstream" ] || { err "upstream 未設定 (fail-closed): metadata 自律 push 不可"; exit 1; }
-  unpushed="$(cd "$CC_COMMS_DIR" && git rev-list "$upstream"..HEAD --count 2>/dev/null)"
+  # ローカル remote-tracking ref（@{u}）は書換可能なため信頼せず、実 remote を ls-remote で権威参照する
+  # upstream tracking が示す remote branch 名（例: origin/main → refs/heads/main）を使用
+  upstream_sym="$(cd "$CC_COMMS_DIR" && git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"
+  [ -n "$upstream_sym" ] || { err "upstream 未設定 (fail-closed): metadata 自律 push 不可"; exit 1; }
+  # upstream_sym 例: "origin/main" → remote="origin", remote_branch="main"
+  remote_part="${upstream_sym%%/*}"
+  remote_branch="${upstream_sym#*/}"
+  [ -n "$remote_branch" ] || { err "upstream から remote branch 名を取得不能 (fail-closed)"; exit 1; }
+  remote_head="$(cd "$CC_COMMS_DIR" && git ls-remote "$CC_COMMS_REMOTE" "refs/heads/$remote_branch" 2>/dev/null | awk '{print $1}' | head -1)"
+  [ -n "$remote_head" ] || { err "実 remote branch 不在/取得不能 (fail-closed): metadata 自律 push 不可"; exit 1; }
+  ( cd "$CC_COMMS_DIR" && git cat-file -e "$remote_head^{commit}" 2>/dev/null ) || { err "remote_head が local に未取得 (fail-closed)"; exit 1; }
+  unpushed="$(cd "$CC_COMMS_DIR" && git rev-list "$remote_head"..HEAD --count 2>/dev/null)"
   if [ "$unpushed" != "1" ]; then
-    err "未送信 commit が他にあります (unpushed=$unpushed)。business 相乗り防止のため metadata 自律送信を中止 (fail-closed)。先に未送信分を解決してください"; exit 1
+    err "実 remote 基準で未送信 commit が他にあります (unpushed=$unpushed)。business 相乗り防止のため metadata 自律送信を中止 (fail-closed)。先に未送信分を解決してください"; exit 1
   fi
   local_branch="$(cd "$CC_COMMS_DIR" && git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   if ( cd "$CC_COMMS_DIR" && git push -q "$CC_COMMS_REMOTE" "HEAD:${local_branch}" >/dev/null 2>&1 ); then

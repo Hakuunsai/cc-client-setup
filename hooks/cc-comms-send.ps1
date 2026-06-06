@@ -42,22 +42,26 @@ if (-not $msgFull -or -not $outboxFull -or -not $msgFull.StartsWith($outboxFull 
 try { $content = Get-Content -Raw -LiteralPath $MsgFile -ErrorAction Stop }
 catch { Err "msg ファイル読み取り失敗 (fail-closed): $MsgFile"; exit 1 }
 
-# frontmatter ブロック（先頭 '---' 〜 次 '---'）を抽出
-$fmMatch = [regex]::Match($content, '(?s)^---[^\S\r\n]*\r?\n(.*?)\r?\n---[^\S\r\n]*(\r?\n|$)')
-if (-not $fmMatch.Success) {
+# frontmatter ブロック（先頭 '---' 〜 次 '---'）を行単位で抽出（H-3: \s* が改行をまたがない保証）
+$lines = $content -split "`r?`n"
+$fmLines = @(); $inFm = $false; $started = $false
+for ($i = 0; $i -lt $lines.Count; $i++) {
+    if (-not $started) { if ($lines[$i] -match '^---\s*$') { $started = $true; $inFm = $true }; continue }
+    if ($inFm -and $lines[$i] -match '^---\s*$') { break }
+    if ($inFm) { $fmLines += $lines[$i] }
+}
+if (-not $started) {
     Err "frontmatter ブロックが見つからない (fail-closed)"; exit 1
 }
-$fm = $fmMatch.Groups[1].Value
 
 # frontmatter 内の 'kind:' 行数を厳密に 1 行検証
-$kindLines = @([regex]::Matches($fm, '(?m)^kind:'))
+$kindLines = @($fmLines | Where-Object { $_ -match '^kind:' })
 if ($kindLines.Count -ne 1) {
     Err "kind は frontmatter 内に厳密 1 行 (検出=$($kindLines.Count), fail-closed)"; exit 1
 }
 
-# 値は前後空白のみ trim、内部空白は残す（'meta data' 等を弾く）
-$kindLineMatch = [regex]::Match($fm, '(?m)^kind:\s*(.*?)(\r?\n|$)')
-$kind = if ($kindLineMatch.Success) { $kindLineMatch.Groups[1].Value.Trim() } else { '' }
+# 値は前後空白のみ trim、内部空白は残す（'meta data' 等を弾く）。同一行内のみなので改行非消費。
+$kind = ($kindLines[0] -replace '^kind:\s*', '').Trim()
 
 if ($kind -ne 'metadata' -and $kind -ne 'business') {
     Err "kind は metadata|business のみ (取得値='$kind', fail-closed)"; exit 1
@@ -95,15 +99,25 @@ try {
     # --- kind による push 分岐 ---
     if ($kind -eq 'metadata') {
         # C-1: 未送信 commit が今の 1 件のみであることを保証（business 相乗り防止）
-        $upstream = git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null
-        if (-not $upstream) {
-            Err 'upstream 未設定 (fail-closed): metadata 自律 push 不可'; exit 1
+        # ローカル remote-tracking ref（@{u}）は書換可能なため信頼せず、実 remote を ls-remote で権威参照する
+        $curBranch = git rev-parse --abbrev-ref HEAD 2>$null
+        if (-not $curBranch) {
+            Err 'branch 取得不能 (fail-closed)'; exit 1
         }
-        $unpushed = git rev-list "$upstream..HEAD" --count 2>$null
+        $lsRemoteOut = git ls-remote $CommsRemote "refs/heads/$curBranch" 2>$null
+        $remoteHead = if ($lsRemoteOut) { ($lsRemoteOut -split '\s+')[0] } else { '' }
+        if (-not $remoteHead -or $remoteHead.Length -lt 40) {
+            Err "実 remote branch 不在/取得不能 (fail-closed): metadata 自律 push 不可"; exit 1
+        }
+        git cat-file -e "$remoteHead^{commit}" 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Err 'remote_head が local に未取得 (fail-closed)'; exit 1
+        }
+        $unpushed = git rev-list "$remoteHead..HEAD" --count 2>$null
         if ($unpushed -ne '1') {
-            Err "未送信 commit が他にあります (unpushed=$unpushed)。business 相乗り防止のため metadata 自律送信を中止 (fail-closed)。先に未送信分を解決してください"; exit 1
+            Err "実 remote 基準で未送信 commit が他にあります (unpushed=$unpushed)。business 相乗り防止のため metadata 自律送信を中止 (fail-closed)。先に未送信分を解決してください"; exit 1
         }
-        $localBranch = git rev-parse --abbrev-ref HEAD 2>$null
+        $localBranch = $curBranch
         git push -q $CommsRemote "HEAD:${localBranch}" 2>&1 | Out-Null
         $pushRc = $LASTEXITCODE
         if ($pushRc -eq 0) {
