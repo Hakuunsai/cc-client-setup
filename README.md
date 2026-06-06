@@ -1,4 +1,4 @@
-# cc-client-setup v0.2
+# cc-client-setup v0.8
 
 owner クライアント (プログラミング未経験者) 向け Claude Code 環境構築 kit。Windows native、Approach W (Claude self-setup) で配備。
 
@@ -55,7 +55,7 @@ owner クライアント (プログラミング未経験者) 向け Claude Code 
 - [`docs/owner-handoff.md`](docs/owner-handoff.md) - owner 5 step 代行手順
 - [`docs/client-cheatsheet.md.template`](docs/client-cheatsheet.md.template) - client 常設カンペ (Windows、印刷推奨)
 - [`docs/client-cheatsheet.linux.md.template`](docs/client-cheatsheet.linux.md.template) - 同上 Linux 版 (起動=VSCode 拡張パネル、v0.7 追加)
-- `tests/` - dev-only の hook 検証スクリプト 3 本 (配布対象外、WebFetch されない)
+- `tests/` - dev-only の hook 検証スクリプト 4 本 (配布対象外、WebFetch されない)
 - [`docs/recovery.md`](docs/recovery.md) - 「Claude が壊した」復旧ガイド
 - [`docs/installation.md`](docs/installation.md) - v0.2 installation guide
 - [`docs/backlog.md`](docs/backlog.md) - Phase 2-13 roadmap
@@ -90,12 +90,16 @@ owner / client が別法人前提、業務情報の sync 経路はない (一方
 7. 記憶の引継ぎ (owner → client 一方向、kit 同梱 seed、remote 連携 0)
 8. フルセットハーネス (cc-company + git-workflow + superpowers)
 
++ 1 新規要素 (v0.8 で追加):
+9. cc-comms 双方向連絡 (per-client Private repo + deploy key、技術 metadata 自律 / 業務情報 client 承認、secret check fail-closed)
+
 ## ライセンス + 配布
 
 private 配布対象 (owner / owner クライアント限定)、外部公開しない。本 repo は public だが、クライアント案件 fee 部分は owner 自社契約に含まれる。
 
 ## 改訂履歴
 
+- v0.8 (2026-06-06): cc-comms 連絡機構追加。per-client Private Git repo + deploy key による client 秘書 ↔ owner 双方向連絡。secret check fail-closed (comms-send.sh 内)。memory repo (`~/.cc-client-memory`) local-only 維持のまま連絡 payload を別 repo (`~/.cc-client-comms`) で remote 化。Phase 10 (pre-push secret check) + Phase 11 (双方向 sync) を一体統合
 - v0.7 (2026-06-06): Linux variant 統合 (案 A)。Linux RHEL 系 + VSCode Remote-SSH + Claude 拡張 構成向けに hook を bash 化 (`*.sh` 2本 + 単一 bash pre-commit) + `settings-user.linux.json.template` + `kit-prompt-linux.md` + Linux cheatsheet + owner-handoff Linux section。Windows 版と完全併存、md 資産は共有。生命線 (拡張+Remote-SSH で hook 発火) は公式 docs 確証済
 - v0.2 (2026-05-27): Approach W (Claude self-setup) で大ピボット、PowerShell bootstrap 廃止、hearing 2 段階構造 (owner ruling Q10) 反映
 - v0.1 (2026-05-26): Phase 1 MVP (PowerShell bootstrap)、deprecated-by-v0.2

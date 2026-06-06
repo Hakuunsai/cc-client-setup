@@ -1,4 +1,19 @@
-# cc-client-setup backlog (v0.7.0)
+# cc-client-setup backlog (v0.8.0)
+
+## v0.8.0 cc-comms 連絡機構 sprint 完走 (2026-06-06)
+
+per-client Private Git repo + deploy key による client 秘書 ↔ owner office-tada 双方向連絡機構 (cc-comms) を追加。Phase 10 相当の secret check (fail-closed) と Phase 11 相当の双方向連絡経路を一体統合実装。
+
+| Task | 内容 |
+|---|---|
+| 送信スクリプト | `scripts/comms-send.sh` (kind=metadata / business 2 本立て、secret regex fail-closed、push/local-only 分岐) |
+| repo 初期化 | `scripts/comms-init.sh` (per-client `~/.cc-client-comms/` bare + deploy key 生成 + Private repo 登録手順) |
+| hook 連携 | Stop hook (`hooks/memory-local-commit.sh`) + comms 送信 trigger を kit-prompt 指示書に組込 |
+| テスト | `tests/test-comms-send.sh` (11 ケース: metadata PASS / business local-only / secret refused / invalid kind / missing file / case-insensitive / inbox stray) |
+
+cc-comms 設計原則: memory repo (`~/.cc-client-memory`) の local-only は維持し、連絡 payload のみ別 repo (`~/.cc-client-comms`) で remote 化。技術 metadata は自律 push、業務情報は client 承認後のみ push の 2 系統。
+
+spec source of truth: [office-tada `docs/superpowers/specs/2026-06-06-cc-client-setup-cc-comms-design.md`](https://github.com/Hakuunsai/office-tada-secretary)。
 
 ## v0.7.0 Linux variant sprint 完走 (2026-06-06)
 
@@ -104,8 +119,8 @@ Phase 1 MVP (commit `4a64fcd` HEAD、freeze 中、deprecated-by-v0.2) で起票�
 | 7 | auto-update 配信機構 (kit-prompt-update.md 自動 carry 化) | install 済 client 3+ 社、update 頻度上昇時 |
 | 8 | Codex / Win-Codex 連携 hook | client が Codex 利用開始時 |
 | 9 | macOS / WSL サポート | client OS 多様化時 |
-| 10 | pre-push hook secret regex check | memory push 経路復活時 (v0.2 では remote 連携 0) |
-| 11 | client → owner memory upload 経路 (双方向 sync 化) | owner / client 合意 + 法的整理完了時 |
+| 10 | pre-push hook secret regex check | memory push 経路復活時 (v0.2 では remote 連携 0) — **本 spec で実装 (spec 2026-06-06、cc-comms 連絡機構)**: cc-comms は secret check (fail-closed、送信スクリプト `comms-send.sh` 内) を Phase 10 相当として統合。memory repo local-only 維持のまま連絡 payload 別 repo で remote 化。 |
+| 11 | client → owner memory upload 経路 (双方向 sync 化) | owner / client 合意 + 法的整理完了時 — **本 spec で実装 (spec 2026-06-06、cc-comms 連絡機構)**: cc-comms は双方向連絡 (per-client Private Git repo + deploy key) を Phase 11 相当として統合。memory repo (`~/.cc-client-memory`) の local-only は維持し、連絡 payload のみ別 repo (`~/.cc-client-comms`) で remote 化。技術 metadata 自律 push / 業務情報 client 承認後 push の 2 系統。Phase 10 + Phase 11 を一体実装。 |
 | 12 | client cheatsheet PDF 自動生成 | 「印刷品質低い」フィードバック時 |
 | 13 | IT 在籍 / プログラマ常駐 client 用別 kit (cc-client-setup-pro 等) | IT スタッフ在籍 client 案件発生時 |
 
