@@ -73,6 +73,23 @@ Claude の完了報告 (kit-prompt.md Step 14 出力) を確認:
 - Phase A 完了 / Phase B pending 状態確認
 - cheatsheet chat 出力を copy → Word / PDF / 紙印刷で client に渡す
 
+### （任意）cc-comms 連絡 repo の準備（owner 作業、Step 4 完了後・Step 5 前）
+
+**任意機能**。owner が repo + deploy key を用意した client のみ実施。未提供 client は skip して Step 5 へ（通常運用可）。
+
+1. GitHub で Private repo `cc-client-comms-{client-id}` を作成（owner 所有）
+2. `ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\cc-comms_{client-id}" -N ""` で deploy key 生成
+3. 公開鍵（.pub）を repo Settings > Deploy keys に **Allow write access** で登録
+4. 秘密鍵を client 機 `$env:USERPROFILE\.ssh\cc-comms_ed25519` に配置 + `$env:USERPROFILE\.ssh\config` に:
+   ```
+   Host cc-comms.github.com
+     HostName github.com
+     IdentityFile C:\Users\{user}\.ssh\cc-comms_ed25519
+   ```
+   remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
+5. comms repo template（`templates/comms-repo/`）を初期 push（outbox/inbox/archive/README/AGENTS）
+6. kit-prompt の **Step 11.7** を owner が手動で実行（clone + copy-item）
+
 ## Step 5: claude 再起動 + SessionStart hook 確認 (2 min)
 
 ```powershell
@@ -147,6 +164,23 @@ owner 手元の `~/repos/cc-client-setup/per-client/{client-id}/kit-prompt.md` (
 ## Step 4: 完了確認 + cheatsheet (3 min)
 
 Claude の完了報告 (kit-prompt-linux.md Step 14 出力) を確認。**Linux 版 cheatsheet** (起動方法 = VSCode 拡張パネル) を chat 出力 → 印刷 / PDF 化で client に渡す。
+
+### （任意）cc-comms 連絡 repo の準備（owner 作業、Step 4 完了後・Step 5 前）
+
+**任意機能**。owner が repo + deploy key を用意した client のみ実施。未提供 client は skip して Step 5 へ（通常運用可）。
+
+1. GitHub で Private repo `cc-client-comms-{client-id}` を作成（owner 所有）
+2. `ssh-keygen -t ed25519 -f ~/.ssh/cc-comms_{client-id} -N ""` で deploy key 生成
+3. 公開鍵（.pub）を repo Settings > Deploy keys に **Allow write access** で登録
+4. 秘密鍵を client 機 `~/.ssh/cc-comms_ed25519` に配置 + `~/.ssh/config` に:
+   ```
+   Host cc-comms.github.com
+     HostName github.com
+     IdentityFile ~/.ssh/cc-comms_ed25519
+   ```
+   remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
+5. comms repo template（`templates/comms-repo/`）を初期 push（outbox/inbox/archive/README/AGENTS）
+6. kit-prompt の **Step 11.7** を owner が手動で実行（clone + chmod +x）
 
 ## Step 5: 再起動 + SessionStart hook 確認
 

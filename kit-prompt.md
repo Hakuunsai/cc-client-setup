@@ -38,6 +38,7 @@
 - [ ] **Step 11b (owner manual)**: plugin install (`/plugin marketplace add` + `/plugin install` × 3 = cc-company + superpowers + codex (v0.5 追加))
 - [ ] **Step 11.5 (Claude 自動、v0.5 追加)**: Codex 実体配備 (Node.js install + `@openai/codex` CLI install + 配備確認)
 - [ ] **Step 11.6 (owner manual、v0.5 追加)**: `codex login` OAuth flow 案内 (ブラウザ login)、`~/.codex/auth.json` 配備確認
+- [ ] **Step 11.7 (owner manual)**: cc-comms 連絡 repo を配置（owner が事前に repo+deploy key を用意済の場合のみ。未提供ならこの Step を skip）
 - [ ] **Step 12**: 完了確認 (各配置物 grep + 4 hook 存在 + plugin enabled state + `~/.cc-client-memory/seed-client-persona.md` 内 Phase B marker 存在 + Codex 実体配備 + `codex@openai-codex` plugin enabled、v0.5 拡張)
 - [ ] **Step 13**: cheatsheet 出力 (placeholder 置換版を chat に出力、owner が印刷 / PDF 化して client に渡す)
 - [ ] **Step 14**: Phase B + v0.5 Codex + v0.6 self-update 状況説明 (owner に「次の claude 再起動で client hearing が走る」+「秘書が必要に応じて別の AI (Codex) にダブルチェック / 実装委譲を自動で行う」+「次に kit を更新したい case は秘書に『cc-client 更新して』と言うだけ」と伝達)
@@ -272,6 +273,38 @@ login が失敗する場合:
 
 (注: login OAuth flow は human-in-the-loop で自動化不可、唯一 owner manual step。Step 11b plugin install と同じ「owner 手動」カテゴリだが、こちらは settings.json declarative ではなく事前 OAuth が必要なため)
 
+### Step 11.7: cc-comms 連絡 repo を配置（owner manual、任意）
+
+**本 Step は owner が事前に comms repo + deploy key を用意済の場合のみ実行。未提供の場合は skip して Step 12 へ。**
+
+comms 未提供のクライアントでは本 Step を skip（連絡機構なしで通常運用可）。
+
+owner に以下を案内（repo + deploy key が用意済であれば PowerShell で実行）:
+
+```powershell
+# cc-comms repo が未 clone なら clone（owner 提供の SSH URL を使用）
+if (-not (Test-Path "$env:USERPROFILE\.cc-client-comms\.git")) {
+    git clone "<comms-repo-ssh-url>" "$env:USERPROFILE\.cc-client-comms"
+}
+
+# cc-comms-send.ps1 をコピー（実行権限は Windows では不要）
+# （kit の hooks/ から取得済みの場合、または kit raw URL から WebFetch でも可）
+Copy-Item "$env:USERPROFILE\.claude\hooks\cc-comms-send.ps1" `
+          "$env:USERPROFILE\.cc-client-comms\cc-comms-send.ps1" -Force
+
+# 配備確認
+if (Test-Path "$env:USERPROFILE\.cc-client-comms\.git") { "cc-comms: ready" } else { "cc-comms: clone 失敗" }
+```
+
+**deploy key 配置** (owner が事前準備):
+- owner 側で deploy key 生成済（`ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\cc-comms_{client-id}" -N ""`）
+- 公開鍵（.pub）を comms repo Settings > Deploy keys に **Allow write access** で登録済
+- 秘密鍵は client 機 `$env:USERPROFILE\.ssh\cc-comms_ed25519` に配置済
+- `$env:USERPROFILE\.ssh\config` に Host alias 設定済（`Host cc-comms.github.com` / `HostName github.com` / `IdentityFile ...cc-comms_ed25519`）
+- comms repo の remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
+
+Claude (あなた) の Step 11.7 完了報告は「owner に手順を案内し、deploy key 配備済の場合のみ clone + copy を実行した（未提供の場合は skip）」で OK。
+
 ### Step 12: 完了確認
 
 ```bash
@@ -309,6 +342,9 @@ codex --version >/dev/null 2>&1 && echo "Codex CLI OK" || echo "Codex CLI NG (de
 [ -f ~/.codex/auth.json ] && echo "codex login OK" || echo "codex login 未完了 (Step 11.6 owner manual を再実行案内)"
 grep -q "codex@openai-codex" ~/.claude/settings.json && echo "Codex plugin enabled state OK" || echo "Codex plugin enabled state NG"
 test -f templates/codex-prompts/client-delegation-prefix.md && echo "Codex prompt prefix template OK" || echo "Codex prompt prefix template NG (kit 同梱漏れ?)"
+
+# cc-comms 配備確認 (任意。未配置は正常運用継続)
+[ -d ~/.cc-client-comms/.git ] && echo "cc-comms: ready" || echo "cc-comms: 未配置(任意)"
 ```
 
 両方 (基本 + Codex 配備) OK が表示されること。Codex 関連 NG は degraded mode で運用継続 (= v0.4 機能は全動作、Codex 委譲のみ無効、cheatsheet 「Codex 利用不能」case 案内継承)。
@@ -354,6 +390,11 @@ chat に以下を出力:
 【次に kit を更新したい case (v0.6 追加)】
 - 秘書に「cc-client 更新して」「アップデート」と言うだけで OK。秘書が最新版を取得し、新しい terminal で paste 実行する手順を案内します。
 - owner 手動の slash command (plugin install) と Codex login が一部残ります、案内が出たら従ってください。
+
+【cc-comms 連絡機構 (任意・Step 11.7 で配備済の場合)】
+- owner との連絡は「owner に相談」「owner に伝えて」で起動。
+- 技術連絡 (metadata kind) は自動送信。業務情報 (business kind) の送信は client の承認確認あり。
+- comms 未配備の場合は連絡機構なしで通常運用を継続 (他の全機能は動作)。
 
 【cheatsheet】
 - Step 13 で chat に出力した cheatsheet を印刷 / PDF 化 → 紙で client に渡してください。

@@ -41,6 +41,7 @@
 - [ ] **Step 11b (owner manual)**: plugin install (`/plugin marketplace add` + `/plugin install` × 3 = cc-company + superpowers + codex)
 - [ ] **Step 11.5 (owner manual)**: Codex 実体配備 (Node.js install + `@openai/codex` CLI install + 配備確認)
 - [ ] **Step 11.6 (owner manual)**: `codex login` OAuth flow 案内 (ブラウザ login)、`~/.codex/auth.json` 配備確認
+- [ ] **Step 11.7 (owner manual)**: cc-comms 連絡 repo を配置（owner が事前に repo+deploy key を用意済の場合のみ。未提供ならこの Step を skip）
 - [ ] **Step 12**: 完了確認 (各配置物 grep + 4 hook 存在 + 実行権限 + plugin enabled state + Phase B marker 存在 + jq 存在 + Codex 実体配備)
 - [ ] **Step 13**: cheatsheet 出力 (Linux 版 placeholder 置換版を chat に出力、owner が印刷 / PDF 化して client に渡す)
 - [ ] **Step 14**: Phase B + Codex + self-update 状況説明 (owner に)
@@ -264,6 +265,38 @@ login が失敗する場合:
 
 **配備確認**: owner が「login 完了」と伝達した後、Claude (あなた) は `[ -f ~/.codex/auth.json ]` を確認。true なら次の Step、false なら Step 12 配備確認に未完了 flag を立てるが kit-prompt 自体は完走継続。
 
+### Step 11.7: cc-comms 連絡 repo を配置（owner manual、任意）
+
+**本 Step は owner が事前に comms repo + deploy key を用意済の場合のみ実行。未提供の場合は skip して Step 12 へ。**
+
+comms 未提供のクライアントでは本 Step を skip（連絡機構なしで通常運用可）。
+
+owner に以下を案内（repo + deploy key が用意済であれば実行）:
+
+```bash
+# cc-comms repo が未 clone なら clone（owner 提供の SSH URL を使用）
+[ ! -d ~/.cc-client-comms/.git ] && git clone <comms-repo-ssh-url> ~/.cc-client-comms
+
+# cc-comms-send.sh をコピー + 実行権限付与
+# （kit の hooks/ から取得済みの場合、または kit raw URL から WebFetch でも可）
+cp ~/.claude/hooks/cc-comms-send.sh ~/.cc-client-comms/cc-comms-send.sh 2>/dev/null || \
+  # WebFetch {kit raw URL prefix}/hooks/cc-comms-send.sh → Write ~/.cc-client-comms/cc-comms-send.sh
+  true
+chmod +x ~/.cc-client-comms/cc-comms-send.sh
+
+# 配備確認
+[ -d ~/.cc-client-comms/.git ] && echo "cc-comms: ready" || echo "cc-comms: clone 失敗"
+```
+
+**deploy key 配置** (owner が事前準備):
+- owner 側で `ssh-keygen -t ed25519 -f ~/.ssh/cc-comms_{client-id} -N ""` で deploy key 生成済
+- 公開鍵（.pub）を comms repo Settings > Deploy keys に **Allow write access** で登録済
+- 秘密鍵は client 機 `~/.ssh/cc-comms_ed25519` に配置済
+- `~/.ssh/config` に Host alias 設定済（`Host cc-comms.github.com` / `HostName github.com` / `IdentityFile ~/.ssh/cc-comms_ed25519`）
+- comms repo の remote URL は `git@cc-comms.github.com:Owner/cc-client-comms-{client-id}.git`
+
+Claude (あなた) の Step 11.7 完了報告は「owner に手順を案内し、deploy key 配備済の場合のみ clone + copy を実行した（未提供の場合は skip）」で OK。
+
 ### Step 12: 完了確認
 
 ```bash
@@ -295,6 +328,9 @@ grep -q "<<<CLIENT_HEARING_PENDING>>>" ~/.cc-client-memory/seed-client-persona.m
 
 # jq 存在確認 (PreToolUse deny hook の前提)
 command -v jq >/dev/null 2>&1 && echo "jq OK" || echo "jq NG (PreToolUse deny がフェイルオープン、sudo dnf install -y jq を案内)"
+
+# cc-comms 配備確認 (任意。未配置は正常運用継続)
+[ -d ~/.cc-client-comms/.git ] && echo "cc-comms: ready" || echo "cc-comms: 未配置(任意)"
 
 # Codex 配備確認 (失敗時は degraded mode flag のみ、kit-prompt 完走継続)
 echo "--- Codex 配備確認 ---"
@@ -351,6 +387,11 @@ chat に以下を出力:
 【次に kit を更新したい case】
 - 秘書に「cc-client 更新して」「アップデート」と言うだけで OK。秘書が最新版を取得し、更新手順を案内します。
 - owner 手動の slash command (plugin install) と Codex login が一部残ります、案内が出たら従ってください。
+
+【cc-comms 連絡機構 (任意・Step 11.7 で配備済の場合)】
+- owner との連絡は「owner に相談」「owner に伝えて」で起動。
+- 技術連絡 (metadata kind) は自動送信。業務情報 (business kind) の送信は client の承認確認あり。
+- comms 未配備の場合は連絡機構なしで通常運用を継続 (他の全機能は動作)。
 
 【cheatsheet】
 - Step 13 で chat に出力した Linux 版 cheatsheet を印刷 / PDF 化 → 紙で client に渡してください。
